@@ -1,0 +1,38 @@
+import React from 'react';
+import HeroSection from '../components/HeroSection';
+import TestDetails from '../components/TestDetails';
+import MostBookedPackages from '../components/MostBookedPackages';
+import WhyBookWithUs from '../components/WhyBookWithUs';
+import CantFindSection from '../components/CantFindSection';
+import FAQSection from '../components/FAQSection';
+import TestimonialsSection from '../components/TestimonialsSection';
+import Footer from '../components/Footer';
+import StickyFooter from '../components/StickyFooter';
+
+const HomePage = () => {
+  return (
+    <div className="min-h-screen bg-white pb-[80px] md:pb-[70px] overflow-x-hidden">
+      <HeroSection />
+      <TestDetails />
+      <MostBookedPackages />
+
+      {/* Why Book With Us (Includes Blue CTA Banner) */}
+      <WhyBookWithUs />
+
+      {/* Reviews Section */}
+      <TestimonialsSection />
+
+      {/* Can't Find / Help Section */}
+      <CantFindSection />
+
+      {/* FAQ Section */}
+      <FAQSection />
+
+      {/* Footer only - removed all other sections */}
+      <Footer />
+      <StickyFooter />
+    </div>
+  );
+};
+
+export default HomePage;
