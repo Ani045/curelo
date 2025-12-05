@@ -7,12 +7,16 @@ const StickyFooter = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Get hero section height (approximately viewport height or find the hero element)
+      // Find the inline mobile form inside HeroSection
+      // It's the first form element inside the hero section on mobile
       const heroSection = document.querySelector('section');
       if (heroSection) {
-        const heroBottom = heroSection.getBoundingClientRect().bottom;
-        // Show form when hero section is scrolled past
-        setShowForm(heroBottom < 0);
+        const inlineForm = heroSection.querySelector('form');
+        if (inlineForm) {
+          const formTop = inlineForm.getBoundingClientRect().top;
+          // Show sticky form as soon as the form starts scrolling past the top of viewport
+          setShowForm(formTop < 0);
+        }
       }
     };
 

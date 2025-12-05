@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
@@ -12,6 +12,17 @@ const HeroSection = () => {
     whatsapp: true,
     privacy: true
   });
+
+  const [isSmallDevice, setIsSmallDevice] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallDevice(window.innerWidth < 400);
+    };
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -29,22 +40,32 @@ const HeroSection = () => {
   ];
 
   return (
-    <section className="bg-[#f2f4f7] py-8 lg:py-10">
+    <section className="bg-[#f2f4f7] pt-2 pb-4 lg:py-10">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 items-start">
 
           {/* LEFT COLUMN: 65% width - Banner & USP Icons (Desktop) */}
-          <div className="w-full lg:w-[65%] flex flex-col gap-8">
+          <div className="w-full lg:w-[65%] flex flex-col gap-3 lg:gap-8">
 
-            {/* Main Banner Image - Mobile vs Desktop images */}
-            <div className="relative rounded-2xl overflow-hidden shadow-sm bg-white">
-              {/* Mobile Banner */}
-              <img
-                src="https://brandingpioneers.co.in/curelo-health/mob.png"
-                alt="Full Body Checkup Banner"
-                className="w-full h-auto object-cover block lg:hidden"
-              />
-              {/* Desktop Banner */}
+            {/* Main Banner Image - Responsive based on screen size */}
+            <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-sm bg-white">
+              {/* Small Device Banner (< 400px like iPhone SE) - Full image */}
+              {isSmallDevice && (
+                <img
+                  src="https://brandingpioneers.co.in/curelo-health/small-ban.png"
+                  alt="Full Body Checkup Banner"
+                  className="w-full h-auto"
+                />
+              )}
+              {/* Regular Mobile Banner (400px - 1023px) - Full image */}
+              {!isSmallDevice && (
+                <img
+                  src="https://brandingpioneers.co.in/curelo-health/mob.png"
+                  alt="Full Body Checkup Banner"
+                  className="w-full h-auto lg:hidden"
+                />
+              )}
+              {/* Desktop Banner (1024px+) */}
               <img
                 src="https://brandingpioneers.co.in/curelo-health/hero.png"
                 alt="Full Body Checkup Banner"
