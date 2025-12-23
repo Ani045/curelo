@@ -2,73 +2,64 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { useCMS } from '../context/CMSContext';
 
 const { FiActivity, FiDroplet, FiHeart, FiFilter, FiShield, FiThermometer, FiFileText, FiZap, FiStar, FiUsers, FiCheck } = FiIcons;
 
 const MostBookedPackages = () => {
-  const packages = [
-    {
-      title: "Fit India Full Body Checkup with Free HbA1c",
-      tags: [
+  const { data } = useCMS();
+  const { mostBookedPackages } = data;
+
+  // Icons map to reconstruct the icons
+  const iconMap = {
+    HbA1c: FiActivity,
+    Lipid: FiDroplet,
+    Liver: FiFilter,
+    Kidney: FiActivity,
+    Heart: FiHeart,
+    Default: FiCheck
+  };
+
+  // Helper to merge CMS data with static icon/tag logic (since CMS doesn't store Icon components)
+  const packagesWithMetadata = mostBookedPackages.packages.map((pkg, i) => {
+    // Reconstruct tags based on some logic or keep them static/hardcoded for now as per plan
+    // For this demo, we'll keep the tags static from the original code but apply title/price from CMS
+    // A more advanced CMS would allow editing tags too, but that requires a complex UI.
+    const originalTags = [
+      [
         { name: "HbA1c", icon: FiActivity },
         { name: "Lipid", icon: FiDroplet },
         { name: "Liver", icon: FiFilter },
         { name: "Kidney", icon: FiActivity }
       ],
-      includes: "90 Parameters",
-      reportTime: "12 hours",
-      price: "₹1249",
-      originalPrice: "₹5947",
-      discount: "78% OFF",
-      recommended: false,
-      extraTags: ["Infection", "Thyroid"]
-    },
-    {
-      title: "Fit India Full Body with Vitamin Screening & Heart Test",
-      tags: [
+      [
         { name: "Heart", icon: FiHeart },
         { name: "HbA1c", icon: FiActivity },
         { name: "Lipid", icon: FiDroplet },
         { name: "Liver", icon: FiFilter }
       ],
-      includes: "96 Parameters",
-      reportTime: "12 hours",
-      price: "₹1799",
-      originalPrice: "₹8566",
-      discount: "78% OFF",
-      recommended: true,
-      extraTags: ["Kidney", "Infection"]
-    },
-    {
-      title: "Advance Plus Full Body Checkup",
-      tags: [
+      [
         { name: "Heart", icon: FiHeart },
         { name: "HbA1c", icon: FiActivity },
         { name: "Lipid", icon: FiDroplet },
         { name: "Liver", icon: FiFilter }
-      ],
-      includes: "100 Parameters",
-      reportTime: "12 hours",
-      price: "₹2499",
-      originalPrice: "₹9955",
-      discount: "74% OFF",
-      recommended: false,
-      extraTags: ["Kidney", "Infection"]
-    }
-  ];
+      ]
+    ];
+    return { ...pkg, tags: originalTags[i] || [] };
+  });
 
   return (
     <section className="py-4 bg-gray-50">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-[#143a69] mb-3">Our Most Booked Packages</h2>
-          <p className="text-gray-600 text-sm">Comprehensive health checkups for your wellness</p>
+          <h2 className="text-3xl font-bold text-[#143a69] mb-3">{mostBookedPackages.title}</h2>
+          <p className="text-gray-600 text-sm">{mostBookedPackages.subtitle}</p>
         </div>
 
         {/* Packages Grid - Compact Design */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {packages.map((pkg, index) => (
+          {packagesWithMetadata.map((pkg, index) => (
             <div
               key={index}
               initial={{ opacity: 0, y: 20 }}
@@ -101,7 +92,7 @@ const MostBookedPackages = () => {
                     {tag.name}
                   </span>
                 ))}
-                {pkg.extraTags.length > 0 && (
+                {pkg.extraTags && pkg.extraTags.length > 0 && (
                   <span className="inline-flex items-center gap-1 bg-[#7bdb81]/10 text-[#143a69] text-[10px] font-medium px-2 py-1 rounded-md border border-[#7bdb81]/20">
                     +{pkg.extraTags.length} More
                   </span>
@@ -144,13 +135,13 @@ const MostBookedPackages = () => {
         <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mb-4">
           {/* Mobile GIF */}
           <img
-            src="https://brandingpioneers.co.in/curelo-health/mob.gif"
+            src={mostBookedPackages.mobileGif}
             alt="Health Promotion GIF"
             className="w-full h-full object-cover block md:hidden"
           />
           {/* Desktop GIF */}
           <img
-            src="https://brandingpioneers.co.in/curelo-health/img.gif"
+            src={mostBookedPackages.desktopGif}
             alt="Health Promotion GIF"
             className="w-full h-[120px] object-cover hidden md:block"
           />
