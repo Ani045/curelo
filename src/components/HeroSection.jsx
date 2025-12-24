@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { useCMS } from '../context/CMSContext';
 
 const { FiUser, FiPhone, FiMapPin, FiCheck, FiSearch, FiHome, FiFileText, FiUsers } = FiIcons;
 
 const HeroSection = () => {
+  const { data } = useCMS();
+  const { hero } = data;
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -32,13 +36,6 @@ const HeroSection = () => {
     }));
   };
 
-  const uspPoints = [
-    { icon: 'https://brandingpioneers.co.in/curelo-health/icon1.png', title: "100% Honest Pricing" },
-    { icon: 'https://brandingpioneers.co.in/curelo-health/icon2.png', title: "India's Widest Home Collection Network" },
-    { icon: 'https://brandingpioneers.co.in/curelo-health/icon3.png', title: "100% Report Accuracy Guaranteed" },
-    { icon: 'https://brandingpioneers.co.in/curelo-health/icon4.png', title: "70+ Lakhs Patients Served" }
-  ];
-
   return (
     <section className="bg-[#f2f4f7] pt-2 pb-4 lg:py-10">
       <div className="container mx-auto px-4">
@@ -52,7 +49,7 @@ const HeroSection = () => {
               {/* Small Device Banner (< 400px like iPhone SE) - Full image */}
               {isSmallDevice && (
                 <img
-                  src="https://brandingpioneers.co.in/curelo-health/small-ban.png"
+                  src={hero.smallBanner}
                   alt="Full Body Checkup Banner"
                   className="w-full h-auto"
                 />
@@ -60,14 +57,14 @@ const HeroSection = () => {
               {/* Regular Mobile Banner (400px - 1023px) - Full image */}
               {!isSmallDevice && (
                 <img
-                  src="https://brandingpioneers.co.in/curelo-health/mob.png"
+                  src={hero.mobileBanner}
                   alt="Full Body Checkup Banner"
                   className="w-full h-auto lg:hidden"
                 />
               )}
               {/* Desktop Banner (1024px+) */}
               <img
-                src="https://brandingpioneers.co.in/curelo-health/hero.png"
+                src={hero.desktopBanner}
                 alt="Full Body Checkup Banner"
                 className="w-full h-auto object-cover hidden lg:block"
               />
@@ -90,12 +87,12 @@ const HeroSection = () => {
                       <span className="text-xl">🥗</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs font-bold text-slate-800">Get Report Consultation & Diet Plan</p>
+                      <p className="text-xs font-bold text-slate-800">{hero.offerTitle}</p>
                       <div className="flex items-center justify-between mt-1">
-                        <span className="text-[10px] text-gray-500">with your Booking!</span>
+                        <span className="text-[10px] text-gray-500">{hero.offerSubtitle}</span>
                         <div className="text-right">
                           <span className="text-green-600 font-bold text-sm">Free</span>
-                          <span className="text-gray-400 line-through text-[10px] ml-1">₹799</span>
+                          <span className="text-gray-400 line-through text-[10px] ml-1">{hero.offerPriceOriginal}</span>
                         </div>
                       </div>
                     </div>
@@ -219,7 +216,7 @@ const HeroSection = () => {
                 Why Choose Curelo Health?
               </h2>
               <div className="grid grid-cols-2 gap-4 px-2">
-                {uspPoints.map((point, index) => (
+                {hero.usps.map((point, index) => (
                   <div
                     key={index}
                     className="flex flex-col items-center text-center gap-3"
@@ -241,7 +238,7 @@ const HeroSection = () => {
                 Why Choose Curelo Health?
               </h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2">
-                {uspPoints.map((point, index) => (
+                {hero.usps.map((point, index) => (
                   <div
                     key={index}
                     className="flex flex-col items-center text-center gap-3"
@@ -275,12 +272,12 @@ const HeroSection = () => {
                     <span className="text-xl">🥗</span>
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-slate-800">Get Report Consultation & Diet Plan</p>
+                    <p className="text-xs font-bold text-slate-800">{hero.offerTitle}</p>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] text-gray-500">with your Booking!</span>
+                      <span className="text-[10px] text-gray-500">{hero.offerSubtitle}</span>
                       <div className="text-right">
                         <span className="text-green-600 font-bold text-sm">Free</span>
-                        <span className="text-gray-400 line-through text-[10px] ml-1">₹799</span>
+                        <span className="text-gray-400 line-through text-[10px] ml-1">{hero.offerPriceOriginal}</span>
                       </div>
                     </div>
                   </div>
