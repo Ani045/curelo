@@ -123,7 +123,27 @@ const MostBookedPackages = () => {
                   </div>
                 </div>
 
-                <button className="bg-[#143a69] hover:bg-[#0f2d52] text-white text-xs font-bold py-2.5 px-5 rounded-lg transition-colors shadow-md hover:shadow-lg">
+                <button
+                  onClick={() => {
+                    // Check if we're on desktop (lg breakpoint)
+                    const isDesktop = window.innerWidth >= 1024;
+                    let nameInput;
+                    
+                    if (isDesktop) {
+                      // On desktop, target the desktop form input
+                      nameInput = document.getElementById('hero-name-input-desktop');
+                    } else {
+                      // On mobile, target the mobile form input
+                      nameInput = document.getElementById('hero-name-input-mobile');
+                    }
+                    
+                    if (nameInput) {
+                      nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      setTimeout(() => nameInput.focus(), 500);
+                    }
+                  }}
+                  className="bg-[#143a69] hover:bg-[#0f2d52] text-white text-xs font-bold py-2.5 px-5 rounded-lg transition-colors shadow-md hover:shadow-lg"
+                >
                   Book Now
                 </button>
               </div>

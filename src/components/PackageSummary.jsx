@@ -36,7 +36,7 @@ const PackageSummary = () => {
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
-        <motion.div
+        <div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -49,11 +49,11 @@ const PackageSummary = () => {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Choose from individual tests or comprehensive health packages tailored to your needs.
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left - Overview */}
-          <motion.div
+          <div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -82,10 +82,10 @@ const PackageSummary = () => {
                 </li>
               </ul>
             </div>
-          </motion.div>
+          </div>
 
           {/* Right - Key Details */}
-          <motion.div
+          <div
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -93,7 +93,7 @@ const PackageSummary = () => {
             className="grid grid-cols-2 gap-4"
           >
             {keyDetails.map((detail, index) => (
-              <motion.div
+              <div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -110,9 +110,9 @@ const PackageSummary = () => {
                 <p className="text-lg font-bold text-gray-900">
                   {detail.value}
                 </p>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

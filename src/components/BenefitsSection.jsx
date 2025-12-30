@@ -32,7 +32,7 @@ const BenefitsSection = () => {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        <motion.div
+        <div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -45,11 +45,11 @@ const BenefitsSection = () => {
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Experience the Curelo advantage for your health and wellness
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {benefits.map((benefit, index) => (
-            <motion.div
+            <div
               key={index}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -69,7 +69,7 @@ const BenefitsSection = () => {
               <p className="text-gray-600 text-sm leading-relaxed">
                 {benefit.description}
               </p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

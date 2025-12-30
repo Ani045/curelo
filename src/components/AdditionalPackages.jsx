@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
@@ -34,7 +33,7 @@ const AdditionalPackages = () => {
         
         <div className="grid md:grid-cols-3 gap-8">
           {packages.map((pkg, index) => (
-            <motion.div
+            <div
               key={index}
               whileHover={{ y: -5 }}
               className="border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all"
@@ -50,7 +49,7 @@ const AdditionalPackages = () => {
                   Book Now
                 </button>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

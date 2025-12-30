@@ -91,7 +91,7 @@ const TestimonialsSection = () => {
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {reviews.map((review, index) => (
-            <motion.div 
+            <div 
               key={index}
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -118,7 +118,7 @@ const TestimonialsSection = () => {
               <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-400">
                  <SafeIcon icon={FiCheckCircle} className="text-[#7bdb81]" /> Verified Patient
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

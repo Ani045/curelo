@@ -41,7 +41,7 @@ const USPSection = () => {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
           {uspPoints.map((point, index) => (
-            <motion.div
+            <div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -61,7 +61,7 @@ const USPSection = () => {
               <p className="text-sm text-gray-500">
                 {point.description}
               </p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

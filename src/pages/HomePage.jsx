@@ -11,7 +11,7 @@ import StickyFooter from '../components/StickyFooter';
 
 const HomePage = () => {
   return (
-    <div className="min-h-screen bg-white pb-[80px] md:pb-[70px] overflow-x-hidden">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       <HeroSection />
       <TestDetails />
       <MostBookedPackages />

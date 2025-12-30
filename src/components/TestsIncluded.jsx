@@ -25,7 +25,7 @@ const TestsIncluded = () => {
 
         <div className="grid md:grid-cols-3 gap-6">
           {popularTests.map((test, index) => (
-            <motion.div
+            <div
               key={index}
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -36,7 +36,7 @@ const TestsIncluded = () => {
                 <SafeIcon icon={test.icon} className="text-xl text-blue-600" />
               </div>
               <span className="font-semibold text-gray-800">{test.name}</span>
-            </motion.div>
+            </div>
           ))}
         </div>
 
