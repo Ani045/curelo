@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import HeroSection from '../components/HeroSection';
 import TestDetails from '../components/TestDetails';
 import MostBookedPackages from '../components/MostBookedPackages';
@@ -10,11 +10,17 @@ import Footer from '../components/Footer';
 import StickyFooter from '../components/StickyFooter';
 
 const HomePage = () => {
+  const [selectedPackage, setSelectedPackage] = useState(null);
+
+  const handlePackageSelect = (packageTitle) => {
+    setSelectedPackage(packageTitle);
+  };
+
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
-      <HeroSection />
+      <HeroSection selectedPackage={selectedPackage} />
       <TestDetails />
-      <MostBookedPackages />
+      <MostBookedPackages onPackageSelect={handlePackageSelect} />
 
       {/* Why Book With Us (Includes Blue CTA Banner) */}
       <WhyBookWithUs />

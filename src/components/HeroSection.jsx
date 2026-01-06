@@ -408,7 +408,7 @@ const ServiceSelect = ({ value, onChange, placeholder = "Select Service/Test" })
   );
 };
 
-const HeroSection = () => {
+const HeroSection = ({ selectedPackage }) => {
   const { data } = useCMS();
   const { hero } = data;
 
@@ -418,6 +418,13 @@ const HeroSection = () => {
     city: '',
     service: ''
   });
+
+  // Auto-fill service when a package is selected from "Book Now"
+  useEffect(() => {
+    if (selectedPackage) {
+      setFormData(prev => ({ ...prev, service: selectedPackage }));
+    }
+  }, [selectedPackage]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -445,51 +452,27 @@ const HeroSection = () => {
     setIsSubmitting(true);
 
     try {
+      // Send form data as simple object - the API will transform it to LeadSquared format
+      const payload = {
+        name: formData.name,
+        phone: formData.phone,
+        city: formData.city,
+        service: formData.service,
+        source: 'Google_lp'  // Hidden field - can be customized per page/campaign
+      };
 
-      const payload = [
-        {
-          "Attribute": "FirstName",
-          "Value": formData.name.split(' ')[0] || formData.name
+      // Submit to serverless API endpoint
+      const response = await fetch('/api/lead', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          "Attribute": "LastName",
-          "Value": formData.name.split(' ').slice(1).join(' ') || ""
-        },
-        {
-          "Attribute": "Phone",
-          "Value": formData.phone
-        },
-        {
-          "Attribute": "mx_Patient_City",
-          "Value": formData.city
-        },
-        {
-          "Attribute": "Source",
-          "Value": "Google_lp"
-        },
-        {
-          "Attribute": "mx_Lead_Type",
-          "Value": "P1 - Curelo New"
-        },
-        {
-          "Attribute": "mx_Product_Service_Interest",
-          "Value": formData.service
-        }
-      ];
+        body: JSON.stringify(payload)
+      });
 
-      // Submit to LeadSquared API
-      const response = await fetch(
-        'https://api-in21.leadsquared.com/v2/LeadManagement.svc//Lead.CreateOrUpdate?postUpdatedLead=false&accessKey=u$r93fb2f084e33e51645ac06f42b03e486&secretKey=f8b5a203607c8fc8c2a16107afe18cf28ab5ab04',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
-        }
-      );
+      const result = await response.json();
 
-      if (response.ok) {
+      if (response.ok && result.success) {
         // Success - reset form
         setFormData({
           name: '',
@@ -499,7 +482,12 @@ const HeroSection = () => {
         });
         alert('Thank you! Your request has been submitted successfully.');
       } else {
-        throw new Error('Submission failed');
+        // Show validation errors if present
+        if (result.details && Array.isArray(result.details)) {
+          alert(result.details.join('\n'));
+        } else {
+          throw new Error(result.error || 'Submission failed');
+        }
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -629,6 +617,7 @@ const HeroSection = () => {
                     />
 
                     {/* Submit Button */}
+
                     <button
                       type="submit"
                       disabled={isSubmitting}
@@ -796,6 +785,7 @@ const HeroSection = () => {
                   {/* Submit Button */}
                   <button
                     type="submit"
+
                     disabled={isSubmitting}
                     className="w-full bg-[#143a69] hover:bg-[#0f2d52] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4"
                   >

@@ -25,10 +25,16 @@ const StickyFooter = () => {
   }, []);
 
   const scrollToForm = () => {
-    // Try desktop input first, then mobile
-    const desktopInput = document.getElementById('hero-name-input-desktop');
-    const mobileInput = document.getElementById('hero-name-input');
-    const nameInput = desktopInput || mobileInput;
+    // Check if we're on desktop (lg breakpoint)
+    const isDesktop = window.innerWidth >= 1024;
+    let nameInput;
+
+    if (isDesktop) {
+      nameInput = document.getElementById('hero-name-input-desktop');
+    } else {
+      nameInput = document.getElementById('hero-name-input-mobile');
+    }
+
     if (nameInput) {
       nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setTimeout(() => nameInput.focus(), 500);

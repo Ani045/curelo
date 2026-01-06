@@ -6,7 +6,7 @@ import { useCMS } from '../context/CMSContext';
 
 const { FiActivity, FiDroplet, FiHeart, FiFilter, FiShield, FiThermometer, FiFileText, FiZap, FiStar, FiUsers, FiCheck } = FiIcons;
 
-const MostBookedPackages = () => {
+const MostBookedPackages = ({ onPackageSelect }) => {
   const { data } = useCMS();
   const { mostBookedPackages } = data;
 
@@ -125,6 +125,11 @@ const MostBookedPackages = () => {
 
                 <button
                   onClick={() => {
+                    // Call the callback to update selectedPackage in parent
+                    if (onPackageSelect) {
+                      onPackageSelect(pkg.title);
+                    }
+
                     // Check if we're on desktop (lg breakpoint)
                     const isDesktop = window.innerWidth >= 1024;
                     let nameInput;
