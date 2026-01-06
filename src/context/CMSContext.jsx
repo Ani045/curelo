@@ -33,8 +33,6 @@ const defaultData = {
   mostBookedPackages: {
     title: "Our Most Booked Packages",
     subtitle: "Comprehensive health checkups for your wellness",
-    mobileGif: "https://brandingpioneers.co.in/curelo-health/mob.gif",
-    desktopGif: "https://brandingpioneers.co.in/curelo-health/img.gif",
     packages: [
       {
         title: "Fit India Full Body Checkup with Free HbA1c",
@@ -67,6 +65,38 @@ const defaultData = {
         extraTags: ["Kidney", "Infection"]
       }
     ]
+  },
+  whyChooseUs: {
+    title: "Why Book Tests With us ?",
+    subtitle: "Trusted by 90 Lakhs+ satisfied customers",
+    features: [
+      { icon: "FiCheckCircle", title: "Quality", description: "Follow Stringent Quality Control" },
+      { icon: "FiClock", title: "On-Time Services", description: "Sample Collection & Reports" },
+      { icon: "FiThumbsUp", title: "Convenience", description: "At-Home & In-Lab Services" },
+      { icon: "FiCalendar", title: "Availability", description: "365 days a year" }
+    ]
+  },
+  faqs: {
+    title: "Frequently Asked Questions",
+    subtitle: "Find answers to common questions about our services",
+    items: [
+      {
+        question: "How does the home sample collection work?",
+        answer: "Once you book a test, a certified phlebotomist will visit your home at your scheduled time to collect samples. The service is free of cost."
+      },
+      {
+        question: "Which labs are affiliated with Curelo?",
+        answer: "We partner with over 1500+ top NABL certified labs across India to ensure you get the most accurate and reliable diagnostic services."
+      },
+      {
+        question: "Do you serve in Delhi/NCR?",
+        answer: "Yes, we have extensive coverage across Delhi, Noida, Gurgaon, Ghaziabad, and Faridabad with multiple collection centers."
+      },
+      {
+        question: "How soon will I get my reports?",
+        answer: "Reports are typically generated within 12-24 hours depending on the test, and are delivered digitally via Email or WhatsApp."
+      }
+    ]
   }
 };
 
@@ -75,13 +105,14 @@ export const CMSProvider = ({ children }) => {
     const savedData = localStorage.getItem('curelo_cms_data');
     if (savedData) {
       const parsed = JSON.parse(savedData);
-      // Merge saved data with default data to ensure new fields (like testDetails) exist
-      // if they were missing in the saved version
       return {
         ...defaultData,
         ...parsed,
+        hero: { ...defaultData.hero, ...parsed.hero },
         testDetails: { ...defaultData.testDetails, ...parsed.testDetails },
-        mostBookedPackages: { ...defaultData.mostBookedPackages, ...parsed.mostBookedPackages }
+        mostBookedPackages: { ...defaultData.mostBookedPackages, ...parsed.mostBookedPackages },
+        whyChooseUs: { ...defaultData.whyChooseUs, ...parsed.whyChooseUs || {} },
+        faqs: { ...defaultData.faqs, ...parsed.faqs || {} }
       };
     }
     return defaultData;

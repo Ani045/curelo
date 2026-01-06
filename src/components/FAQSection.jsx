@@ -2,46 +2,14 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { useCMS } from '../context/CMSContext';
 
 const { FiChevronDown, FiChevronUp, FiHelpCircle } = FiIcons;
 
 const FAQSection = () => {
+  const { data } = useCMS();
+  const { faqs } = data;
   const [openFAQ, setOpenFAQ] = useState(null);
-
-  const faqs = [
-    {
-      question: "How does the home sample collection work?",
-      answer: "Once you book a test, a certified phlebotomist will visit your home at your scheduled time to collect samples. The service is free of cost."
-    },
-    {
-      question: "Which labs are affiliated with Curelo?",
-      answer: "We partner with over 1500+ top NABL certified labs across India to ensure you get the most accurate and reliable diagnostic services."
-    },
-    {
-      question: "Do you serve in Delhi/NCR?",
-      answer: "Yes, we have extensive coverage across Delhi, Noida, Gurgaon, Ghaziabad, and Faridabad with multiple collection centers."
-    },
-    {
-      question: "How soon will I get my reports?",
-      answer: "Reports are typically generated within 12-24 hours depending on the test, and are delivered digitally via Email or WhatsApp."
-    },
-    {
-      question: "What payment methods do you accept?",
-      answer: "We accept all major debit/credit cards, UPI, net banking, and cash on home collection."
-    },
-    {
-      question: "Can I cancel or reschedule my appointment?",
-      answer: "Yes, you can cancel or reschedule your appointment up to 2 hours before the scheduled time without any charges."
-    },
-    {
-      question: "Is fasting required for all tests?",
-      answer: "Not all tests require fasting. Specific requirements will be mentioned in your test details. Generally, 10-12 hours fasting is needed for lipid and glucose tests."
-    },
-    {
-      question: "How do I download my reports?",
-      answer: "Reports are automatically sent to your email and WhatsApp. You can also download them from our website using your registered mobile number."
-    }
-  ];
 
   const toggleFAQ = (index) => {
     setOpenFAQ(openFAQ === index ? null : index);
@@ -54,31 +22,23 @@ const FAQSection = () => {
 
           {/* Left - FAQ Section */}
           <div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
             className="pr-0 lg:pr-8"
           >
             {/* Header */}
             <div className="mb-8">
               <h2 className="text-2xl lg:text-3xl font-bold text-[#143a69] mb-3">
-                Frequently Asked Questions
+                {faqs.title}
               </h2>
               <p className="text-gray-600 text-sm lg:text-base">
-                Find answers to common questions about our services
+                {faqs.subtitle}
               </p>
             </div>
 
             {/* FAQ Items - Compact Design */}
             <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-              {faqs.map((faq, index) => (
+              {faqs.items.map((faq, index) => (
                 <div
                   key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
                   className="border border-gray-200 rounded-xl overflow-hidden bg-white transition-all duration-300 hover:border-[#143a69]/30 hover:shadow-sm"
                 >
                   <button
@@ -100,7 +60,7 @@ const FAQSection = () => {
 
                   <AnimatePresence>
                     {openFAQ === index && (
-                      <div
+                      <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -110,7 +70,7 @@ const FAQSection = () => {
                         <div className="p-3.5 bg-white text-gray-600 text-sm leading-relaxed border-t border-gray-100">
                           {faq.answer}
                         </div>
-                      </div>
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
@@ -119,10 +79,6 @@ const FAQSection = () => {
 
             {/* Contact Info */}
             <div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 }}
               className="mt-6 p-4 bg-[#143a69]/5 rounded-xl border border-[#143a69]/10"
             >
               <div className="flex items-center gap-3">
@@ -139,10 +95,6 @@ const FAQSection = () => {
 
           {/* Right - Image */}
           <div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
             <div className="relative rounded-2xl overflow-hidden shadow-xl">
@@ -161,10 +113,6 @@ const FAQSection = () => {
 
               {/* Floating badge */}
               <div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.8, type: "spring" }}
                 className="absolute top-6 right-6 bg-white rounded-full p-3 shadow-lg z-30"
               >
                 <div className="w-12 h-12 bg-[#7bdb81] rounded-full flex items-center justify-center">

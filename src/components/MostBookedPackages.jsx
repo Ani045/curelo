@@ -128,15 +128,15 @@ const MostBookedPackages = () => {
                     // Check if we're on desktop (lg breakpoint)
                     const isDesktop = window.innerWidth >= 1024;
                     let nameInput;
-                    
+
                     if (isDesktop) {
-                      // On desktop, target the desktop form input
+                      // On desktop, target the desktop <SAME>
                       nameInput = document.getElementById('hero-name-input-desktop');
                     } else {
-                      // On mobile, target the mobile form input
+                      // On mobile, target the mobile <SAME>
                       nameInput = document.getElementById('hero-name-input-mobile');
                     }
-                    
+
                     if (nameInput) {
                       nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
                       setTimeout(() => nameInput.focus(), 500);
@@ -150,23 +150,6 @@ const MostBookedPackages = () => {
             </div>
           ))}
         </div>
-
-        {/* GIF Section - Separate Mobile and Desktop GIFs */}
-        <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mb-4">
-          {/* Mobile GIF */}
-          <img
-            src={mostBookedPackages.mobileGif}
-            alt="Health Promotion GIF"
-            className="w-full h-full object-cover block md:hidden"
-          />
-          {/* Desktop GIF */}
-          <img
-            src={mostBookedPackages.desktopGif}
-            alt="Health Promotion GIF"
-            className="w-full h-[120px] object-cover hidden md:block"
-          />
-        </div>
-
       </div>
     </section>
   );

@@ -50,8 +50,11 @@ const AdminPage = () => {
     // Sync localData if data changes externally (or on first load if async, though here it's synchronous)
     // But mostly we want to verify dirtiness
     useEffect(() => {
-        const activeSectionData = data[activeTab === 'packages' ? 'mostBookedPackages' : activeTab];
-        const localSectionData = localData[activeTab === 'packages' ? 'mostBookedPackages' : activeTab];
+        let sectionKey = activeTab;
+        if (activeTab === 'packages') sectionKey = 'mostBookedPackages';
+
+        const activeSectionData = data[sectionKey];
+        const localSectionData = localData[sectionKey];
 
         // Simple deep compare
         const dirty = JSON.stringify(activeSectionData) !== JSON.stringify(localSectionData);
@@ -60,7 +63,8 @@ const AdminPage = () => {
 
 
     const handleSave = () => {
-        const sectionKey = activeTab === 'packages' ? 'mostBookedPackages' : activeTab;
+        let sectionKey = activeTab;
+        if (activeTab === 'packages') sectionKey = 'mostBookedPackages';
         updateSection(sectionKey, localData[sectionKey]);
     };
 
@@ -127,8 +131,8 @@ const AdminPage = () => {
                 onClick={handleSave}
                 disabled={!isDirty}
                 className={`px-6 py-2 rounded-lg font-semibold transition-colors ${isDirty
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
             >
                 {isDirty ? 'Save Changes' : 'Saved'}
@@ -164,6 +168,18 @@ const AdminPage = () => {
                         onClick={() => setActiveTab('packages')}
                     >
                         Most Booked Packages
+                    </button>
+                    <button
+                        className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'whyChooseUs' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('whyChooseUs')}
+                    >
+                        Why Choose Us
+                    </button>
+                    <button
+                        className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'faqs' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('faqs')}
+                    >
+                        FAQs
                     </button>
                 </div>
 
@@ -286,18 +302,28 @@ const AdminPage = () => {
                         <div className="space-y-8">
                             {renderSaveButton()}
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Section Items</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    <ImageUpload
-                                        label="Mobile GIF"
-                                        currentImage={localData.mostBookedPackages.mobileGif}
-                                        onImageChange={(base64) => handlePackageImageChange('mobileGif', base64)}
-                                    />
-                                    <ImageUpload
-                                        label="Desktop GIF"
-                                        currentImage={localData.mostBookedPackages.desktopGif}
-                                        onImageChange={(base64) => handlePackageImageChange('desktopGif', base64)}
-                                    />
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Section Header</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                        <input
+                                            type="text"
+                                            name="title"
+                                            value={localData.mostBookedPackages.title}
+                                            onChange={handlePackageSectionChange}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                                        <input
+                                            type="text"
+                                            name="subtitle"
+                                            value={localData.mostBookedPackages.subtitle}
+                                            onChange={handlePackageSectionChange}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -351,6 +377,174 @@ const AdminPage = () => {
                                                         value={pkg.reportTime}
                                                         onChange={(e) => updateLocalPackage(index, 'reportTime', e.target.value)}
                                                         className="w-full p-2 border rounded text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'whyChooseUs' && (
+                        <div className="space-y-8">
+                            {renderSaveButton()}
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Section Header</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                        <input
+                                            type="text"
+                                            value={localData.whyChooseUs.title}
+                                            onChange={(e) => updateLocalSection('whyChooseUs', { title: e.target.value })}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                                        <input
+                                            type="text"
+                                            value={localData.whyChooseUs.subtitle}
+                                            onChange={(e) => updateLocalSection('whyChooseUs', { subtitle: e.target.value })}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Features</h3>
+                                <div className="space-y-4">
+                                    {localData.whyChooseUs.features.map((feature, index) => (
+                                        <div key={index} className="bg-gray-50 p-4 rounded border">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Icon Name (react-icons)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={feature.icon}
+                                                        onChange={(e) => {
+                                                            const newFeatures = [...localData.whyChooseUs.features];
+                                                            newFeatures[index].icon = e.target.value;
+                                                            updateLocalSection('whyChooseUs', { features: newFeatures });
+                                                        }}
+                                                        className="w-full p-2 border rounded text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Title</label>
+                                                    <input
+                                                        type="text"
+                                                        value={feature.title}
+                                                        onChange={(e) => {
+                                                            const newFeatures = [...localData.whyChooseUs.features];
+                                                            newFeatures[index].title = e.target.value;
+                                                            updateLocalSection('whyChooseUs', { features: newFeatures });
+                                                        }}
+                                                        className="w-full p-2 border rounded text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                                                    <input
+                                                        type="text"
+                                                        value={feature.description}
+                                                        onChange={(e) => {
+                                                            const newFeatures = [...localData.whyChooseUs.features];
+                                                            newFeatures[index].description = e.target.value;
+                                                            updateLocalSection('whyChooseUs', { features: newFeatures });
+                                                        }}
+                                                        className="w-full p-2 border rounded text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'faqs' && (
+                        <div className="space-y-8">
+                            {renderSaveButton()}
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Section Header</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                        <input
+                                            type="text"
+                                            value={localData.faqs.title}
+                                            onChange={(e) => updateLocalSection('faqs', { title: e.target.value })}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                                        <input
+                                            type="text"
+                                            value={localData.faqs.subtitle}
+                                            onChange={(e) => updateLocalSection('faqs', { subtitle: e.target.value })}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center border-b pb-2 mb-4">
+                                    <h3 className="text-lg font-semibold text-gray-800">FAQ Items</h3>
+                                    <button
+                                        onClick={() => {
+                                            const newItems = [...localData.faqs.items, { question: '', answer: '' }];
+                                            updateLocalSection('faqs', { items: newItems });
+                                        }}
+                                        className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200"
+                                    >
+                                        + Add FAQ
+                                    </button>
+                                </div>
+                                <div className="space-y-4">
+                                    {localData.faqs.items.map((item, index) => (
+                                        <div key={index} className="bg-gray-50 p-4 rounded border">
+                                            <div className="flex justify-between mb-2">
+                                                <h4 className="font-bold text-gray-700">FAQ {index + 1}</h4>
+                                                <button
+                                                    onClick={() => {
+                                                        const newItems = localData.faqs.items.filter((_, i) => i !== index);
+                                                        updateLocalSection('faqs', { items: newItems });
+                                                    }}
+                                                    className="text-red-500 text-xs hover:underline"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Question</label>
+                                                    <input
+                                                        type="text"
+                                                        value={item.question}
+                                                        onChange={(e) => {
+                                                            const newItems = [...localData.faqs.items];
+                                                            newItems[index].question = e.target.value;
+                                                            updateLocalSection('faqs', { items: newItems });
+                                                        }}
+                                                        className="w-full p-2 border rounded text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Answer</label>
+                                                    <textarea
+                                                        rows="3"
+                                                        value={item.answer}
+                                                        onChange={(e) => {
+                                                            const newItems = [...localData.faqs.items];
+                                                            newItems[index].answer = e.target.value;
+                                                            updateLocalSection('faqs', { items: newItems });
+                                                        }}
+                                                        className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                                     />
                                                 </div>
                                             </div>

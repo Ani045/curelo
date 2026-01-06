@@ -445,14 +445,14 @@ const HeroSection = () => {
     setIsSubmitting(true);
 
     try {
-     
+
       const payload = [
         {
           "Attribute": "FirstName",
           "Value": formData.name.split(' ')[0] || formData.name
         },
         {
-          "Attribute": "LastName", 
+          "Attribute": "LastName",
           "Value": formData.name.split(' ').slice(1).join(' ') || ""
         },
         {
@@ -629,8 +629,8 @@ const HeroSection = () => {
                     />
 
                     {/* Submit Button */}
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={isSubmitting}
                       className="w-full bg-[#143a69] hover:bg-[#0f2d52] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4"
                     >
@@ -794,8 +794,8 @@ const HeroSection = () => {
                   />
 
                   {/* Submit Button */}
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={isSubmitting}
                     className="w-full bg-[#143a69] hover:bg-[#0f2d52] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4"
                   >
