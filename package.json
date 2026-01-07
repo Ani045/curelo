@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node api/dev-server.js & vite",
+    "dev:vite": "vite",
+    "dev:api": "node api/dev-server.js",
     "build": "npm run lint && vite build",
     "lint": "eslint .",
     "lint:error": "eslint . --quiet",
