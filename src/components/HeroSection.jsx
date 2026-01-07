@@ -5,6 +5,43 @@ import { useCMS } from '../context/CMSContext';
 
 const { FiUser, FiPhone, FiMapPin, FiCheck, FiSearch, FiHome, FiFileText, FiUsers, FiChevronDown, FiX } = FiIcons;
 
+/**
+ * Extracts and sanitizes the URL slug from window.location
+ * Returns the path segments after the domain (e.g., "thyroid-test" from "/thyroid-test")
+ * Security measures:
+ * - Removes leading/trailing slashes
+ * - Replaces multiple slashes with underscores
+ * - Removes potentially dangerous characters
+ * - Limits length to prevent abuse
+ * - Returns empty string for homepage
+ */
+const getUrlSlug = () => {
+  try {
+    if (typeof window === 'undefined') return '';
+
+    // Get the pathname from the URL
+    const pathname = window.location.pathname;
+
+    // Remove leading and trailing slashes
+    let slug = pathname.replace(/^\/+|\/+$/g, '');
+
+    // Replace remaining slashes with underscores (for subdirectories)
+    slug = slug.replace(/\//g, '_');
+
+    // Remove any potentially dangerous characters - only allow alphanumeric, hyphens, underscores
+    slug = slug.replace(/[^a-zA-Z0-9\-_]/g, '');
+
+    // Limit length to prevent abuse (max 100 characters)
+    slug = slug.substring(0, 100);
+
+    // Return the sanitized slug or empty string for homepage
+    return slug || '';
+  } catch (error) {
+    console.error('Error extracting URL slug:', error);
+    return '';
+  }
+};
+
 // All available services
 const SERVICES_LIST = [
   "TSH Thyroid Stimulating Hormone",
@@ -452,13 +489,17 @@ const HeroSection = ({ selectedPackage }) => {
     setIsSubmitting(true);
 
     try {
+      // Get the URL slug for tracking which landing page the lead came from
+      const urlSlug = getUrlSlug();
+
       // Send form data as simple object - the API will transform it to LeadSquared format
       const payload = {
         name: formData.name,
         phone: formData.phone,
         city: formData.city,
         service: formData.service,
-        source: 'Google_lp'  // Hidden field - can be customized per page/campaign
+        source: 'Google_lp',  // Hidden field - can be customized per page/campaign
+        utmSource: urlSlug    // Maps to mx_utm_source - extracted from URL path (e.g., "thyroid-test")
       };
 
       // Submit to serverless API endpoint
