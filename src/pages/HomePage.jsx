@@ -1,44 +1,37 @@
-import React, { useState } from 'react';
-import HeroSection from '../components/HeroSection';
-import TestDetails from '../components/TestDetails';
-import MostBookedPackages from '../components/MostBookedPackages';
-import WhyBookWithUs from '../components/WhyBookWithUs';
-import CantFindSection from '../components/CantFindSection';
-import FAQSection from '../components/FAQSection';
-import TestimonialsSection from '../components/TestimonialsSection';
-import Footer from '../components/Footer';
-import StickyFooter from '../components/StickyFooter';
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useCMS } from '../context/CMSContext';
+import DefaultTemplate from '../templates/DefaultTemplate';
+import MinimalTemplate from '../templates/MinimalTemplate';
 
 const HomePage = () => {
-  const [selectedPackage, setSelectedPackage] = useState(null);
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const { data, activeTemplate, setActivePage, getAllPages } = useCMS();
 
-  const handlePackageSelect = (packageTitle) => {
-    setSelectedPackage(packageTitle);
+  useEffect(() => {
+    const pageSlug = slug || 'home';
+    const pages = getAllPages();
+    if (pages.some(p => p.slug === pageSlug)) {
+      setActivePage(pageSlug);
+    } else {
+      navigate('/');
+    }
+  }, [slug, setActivePage, getAllPages, navigate]);
+
+  if (!data) return null;
+
+  const renderTemplate = () => {
+    switch (activeTemplate) {
+      case 'minimal':
+        return <MinimalTemplate />;
+      case 'default':
+      default:
+        return <DefaultTemplate />;
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
-      <HeroSection selectedPackage={selectedPackage} />
-      <TestDetails />
-      <MostBookedPackages onPackageSelect={handlePackageSelect} />
-
-      {/* Why Book With Us (Includes Blue CTA Banner) */}
-      <WhyBookWithUs />
-
-      {/* Reviews Section */}
-      <TestimonialsSection />
-
-      {/* Can't Find / Help Section */}
-      <CantFindSection />
-
-      {/* FAQ Section */}
-      <FAQSection />
-
-      {/* Footer only - removed all other sections */}
-      <Footer />
-      <StickyFooter />
-    </div>
-  );
+  return renderTemplate();
 };
 
 export default HomePage;

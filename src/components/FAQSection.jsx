@@ -4,11 +4,12 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useCMS } from '../context/CMSContext';
 
-const { FiChevronDown, FiChevronUp, FiHelpCircle } = FiIcons;
+const { FiChevronDown, FiChevronUp, FiHelpCircle, FiPhone } = FiIcons;
 
 const FAQSection = () => {
   const { data } = useCMS();
-  const { faqs } = data;
+  const { faqs, contact } = data;
+  const phoneNumber = contact?.phone || '+918069770000';
   const [openFAQ, setOpenFAQ] = useState(null);
 
   const toggleFAQ = (index) => {
@@ -81,13 +82,19 @@ const FAQSection = () => {
             <div
               className="mt-6 p-4 bg-[#143a69]/5 rounded-xl border border-[#143a69]/10"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#7bdb81] rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiHelpCircle} className="text-white text-lg" />
-                </div>
+              <div className="flex items-center gap-6">
+                <a
+                  href={`tel:${phoneNumber}`}
+                  className="relative group cursor-pointer"
+                >
+                  <div className="absolute inset-0 bg-[#143a69] rounded-full blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                  <div className="relative w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-[#143a69] hover:scale-110 transition-transform">
+                    <SafeIcon icon={FiPhone} className="w-6 h-6 text-[#143a69]" />
+                  </div>
+                </a>
                 <div>
                   <p className="text-[#143a69] font-semibold text-sm">Still have questions?</p>
-                  <p className="text-gray-600 text-xs">Call us at +91 806 977 0000</p>
+                  <p className="text-gray-600 text-xs">Call us at {phoneNumber}</p>
                 </div>
               </div>
             </div>
@@ -115,8 +122,8 @@ const FAQSection = () => {
               <div
                 className="absolute top-6 right-6 bg-white rounded-full p-3 shadow-lg z-30"
               >
-                <div className="w-12 h-12 bg-[#7bdb81] rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiHelpCircle} className="text-white text-xl" />
+                <div className="w-12 h-12 bg-[#143a69] rounded-full flex items-center justify-center">
+                  <SafeIcon icon={FiPhone} className="text-white text-xl" />
                 </div>
               </div>
             </div>

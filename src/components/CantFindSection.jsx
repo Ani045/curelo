@@ -1,13 +1,16 @@
 import React from 'react';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { useCMS } from '../context/CMSContext';
 
 const { FiArrowRight, FiMessageCircle, FiPhone } = FiIcons;
 
 const CantFindSection = () => {
-  const whatsappNumber = '918069770000'; // Curelo WhatsApp number
-  const phoneNumber = '+918069770000'; // Curelo phone number
-  const whatsappMessage = 'Hi, I need help finding a health package.';
+  const { data } = useCMS();
+  const { contact } = data;
+  const whatsappNumber = contact?.whatsapp || '918069770000';
+  const phoneNumber = contact?.phone || '+918069770000';
+  const whatsappMessage = contact?.whatsappMessage || 'Hi, I need help finding a health package.';
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 

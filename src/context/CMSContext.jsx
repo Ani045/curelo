@@ -1,9 +1,11 @@
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 
 const CMSContext = createContext();
 
 export const useCMS = () => useContext(CMSContext);
+
+// ... (defaultData remains the same)
 
 const defaultData = {
   hero: {
@@ -97,73 +99,237 @@ const defaultData = {
         answer: "Reports are typically generated within 12-24 hours depending on the test, and are delivered digitally via Email or WhatsApp."
       }
     ]
+  },
+  contact: {
+    phone: '+918069770000',
+    whatsapp: '918069770000',
+    whatsappMessage: 'Hi, I need help finding a health package.'
   }
 };
 
+
 export const CMSProvider = ({ children }) => {
-  const [data, setData] = useState(() => {
-    const savedData = localStorage.getItem('curelo_cms_data');
+  const [state, setState] = useState(() => {
+    const savedData = localStorage.getItem('curelo_multi_cms_data');
     if (savedData) {
       const parsed = JSON.parse(savedData);
+      // Ensure all pages have the latest default sections
+      const mergedPages = {};
+      Object.keys(parsed.pages).forEach(slug => {
+        mergedPages[slug] = {
+          ...parsed.pages[slug],
+          template: parsed.pages[slug].template || 'default',
+          data: {
+            ...defaultData,
+            ...parsed.pages[slug].data
+          }
+        };
+      });
       return {
-        ...defaultData,
         ...parsed,
-        hero: { ...defaultData.hero, ...parsed.hero },
-        testDetails: { ...defaultData.testDetails, ...parsed.testDetails },
-        mostBookedPackages: { ...defaultData.mostBookedPackages, ...parsed.mostBookedPackages },
-        whyChooseUs: { ...defaultData.whyChooseUs, ...parsed.whyChooseUs || {} },
-        faqs: { ...defaultData.faqs, ...parsed.faqs || {} }
+        pages: mergedPages
       };
     }
-    return defaultData;
+
+    // Migration from old single-page format
+    const oldData = localStorage.getItem('curelo_cms_data');
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      return {
+        pages: {
+          home: {
+            title: 'Home Page',
+            slug: 'home',
+            template: 'default',
+            data: {
+              ...defaultData,
+              ...parsed,
+              hero: { ...defaultData.hero, ...parsed.hero },
+              testDetails: { ...defaultData.testDetails, ...parsed.testDetails },
+              mostBookedPackages: { ...defaultData.mostBookedPackages, ...parsed.mostBookedPackages },
+              whyChooseUs: { ...defaultData.whyChooseUs, ...parsed.whyChooseUs || {} },
+              faqs: { ...defaultData.faqs, ...parsed.faqs || {} },
+              contact: { ...defaultData.contact, ...parsed.contact || {} }
+            }
+          }
+        },
+        activePageSlug: 'home'
+      };
+    }
+
+    return {
+      pages: {
+        home: {
+          title: 'Home Page',
+          slug: 'home',
+          template: 'default',
+          data: defaultData
+        }
+      },
+      activePageSlug: 'home'
+    };
   });
 
   useEffect(() => {
-    localStorage.setItem('curelo_cms_data', JSON.stringify(data));
-  }, [data]);
+    localStorage.setItem('curelo_multi_cms_data', JSON.stringify(state));
+  }, [state]);
 
-  const updateSection = (section, newData) => {
-    setData(prev => ({
+  const activePage = state.pages[state.activePageSlug] || state.pages['home'];
+  const data = activePage.data;
+
+  const setActivePage = useCallback((slug) => {
+    if (state.pages[slug]) {
+      setState(prev => ({ ...prev, activePageSlug: slug }));
+    }
+  }, [state.pages]);
+
+  const createPage = useCallback((slug, title, template = 'default') => {
+    if (state.pages[slug]) return false;
+
+    setState(prev => ({
       ...prev,
-      [section]: { ...prev[section], ...newData }
+      pages: {
+        ...prev.pages,
+        [slug]: {
+          title,
+          slug,
+          template,
+          data: defaultData
+        }
+      }
     }));
-  };
+    return true;
+  }, [state.pages]);
 
-  const updateUSP = (index, field, value) => {
-    setData(prev => {
-      const newUSPs = [...prev.hero.usps];
+  const updatePageTemplate = useCallback((slug, template) => {
+    setState(prev => ({
+      ...prev,
+      pages: {
+        ...prev.pages,
+        [slug]: {
+          ...prev.pages[slug],
+          template
+        }
+      }
+    }));
+  }, []);
+
+  const deletePage = useCallback((slug) => {
+    if (slug === 'home') return false;
+
+    setState(prev => {
+      const newPages = { ...prev.pages };
+      delete newPages[slug];
+      return {
+        ...prev,
+        pages: newPages,
+        activePageSlug: prev.activePageSlug === slug ? 'home' : prev.activePageSlug
+      };
+    });
+    return true;
+  }, []);
+
+  const getAllPages = useCallback(() => {
+    return Object.values(state.pages).map(p => ({ title: p.title, slug: p.slug, template: p.template }));
+  }, [state.pages]);
+
+  const updateSection = useCallback((section, newData) => {
+    setState(prev => {
+      const currentPage = prev.pages[prev.activePageSlug];
+      return {
+        ...prev,
+        pages: {
+          ...prev.pages,
+          [prev.activePageSlug]: {
+            ...currentPage,
+            data: {
+              ...currentPage.data,
+              [section]: { ...currentPage.data[section], ...newData }
+            }
+          }
+        }
+      };
+    });
+  }, []);
+
+  const updateUSP = useCallback((index, field, value) => {
+    setState(prev => {
+      const currentPage = prev.pages[prev.activePageSlug];
+      const newUSPs = [...currentPage.data.hero.usps];
       newUSPs[index] = { ...newUSPs[index], [field]: value };
       return {
         ...prev,
-        hero: { ...prev.hero, usps: newUSPs }
+        pages: {
+          ...prev.pages,
+          [prev.activePageSlug]: {
+            ...currentPage,
+            data: {
+              ...currentPage.data,
+              hero: { ...currentPage.data.hero, usps: newUSPs }
+            }
+          }
+        }
       };
     });
-  };
+  }, []);
 
-  const updateTestCard = (index, field, value) => {
-    setData(prev => {
-      const newCards = [...prev.testDetails.cards];
+  const updateTestCard = useCallback((index, field, value) => {
+    setState(prev => {
+      const currentPage = prev.pages[prev.activePageSlug];
+      const newCards = [...currentPage.data.testDetails.cards];
       newCards[index] = { ...newCards[index], [field]: value };
       return {
         ...prev,
-        testDetails: { ...prev.testDetails, cards: newCards }
+        pages: {
+          ...prev.pages,
+          [prev.activePageSlug]: {
+            ...currentPage,
+            data: {
+              ...currentPage.data,
+              testDetails: { ...currentPage.data.testDetails, cards: newCards }
+            }
+          }
+        }
       };
     });
-  };
+  }, []);
 
-  const updatePackage = (index, field, value) => {
-    setData(prev => {
-      const newPackages = [...prev.mostBookedPackages.packages];
+  const updatePackage = useCallback((index, field, value) => {
+    setState(prev => {
+      const currentPage = prev.pages[prev.activePageSlug];
+      const newPackages = [...currentPage.data.mostBookedPackages.packages];
       newPackages[index] = { ...newPackages[index], [field]: value };
       return {
         ...prev,
-        mostBookedPackages: { ...prev.mostBookedPackages, packages: newPackages }
+        pages: {
+          ...prev.pages,
+          [prev.activePageSlug]: {
+            ...currentPage,
+            data: {
+              ...currentPage.data,
+              mostBookedPackages: { ...currentPage.data.mostBookedPackages, packages: newPackages }
+            }
+          }
+        }
       };
     });
-  };
+  }, []);
 
   return (
-    <CMSContext.Provider value={{ data, updateSection, updateUSP, updateTestCard, updatePackage }}>
+    <CMSContext.Provider value={{
+      data,
+      activePageSlug: state.activePageSlug,
+      activeTemplate: activePage.template,
+      setActivePage,
+      createPage,
+      updatePageTemplate,
+      deletePage,
+      getAllPages,
+      updateSection,
+      updateUSP,
+      updateTestCard,
+      updatePackage
+    }}>
       {children}
     </CMSContext.Provider>
   );

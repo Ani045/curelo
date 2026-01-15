@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCMS } from '../context/CMSContext';
 
 const ImageUpload = ({ label, currentImage, onImageChange }) => {
@@ -42,14 +43,35 @@ const ImageUpload = ({ label, currentImage, onImageChange }) => {
 };
 
 const AdminPage = () => {
-    const { data, updateSection } = useCMS();
+    const { slug } = useParams();
+    const navigate = useNavigate();
+    const { data, updateSection, setActivePage, activePageSlug, getAllPages, activeTemplate, updatePageTemplate } = useCMS();
     const [localData, setLocalData] = useState(data);
     const [activeTab, setActiveTab] = useState('hero');
     const [isDirty, setIsDirty] = useState(false);
 
+    // Set active page on mount or slug change
+    useEffect(() => {
+        if (slug) {
+            const pages = getAllPages();
+            if (pages.some(p => p.slug === slug)) {
+                setActivePage(slug);
+            } else {
+                navigate('/admin');
+            }
+        }
+    }, [slug, setActivePage, getAllPages, navigate]);
+
+    // Update local data when the active page in context changes
+    useEffect(() => {
+        setLocalData(data);
+    }, [data, activePageSlug]);
+
     // Sync localData if data changes externally (or on first load if async, though here it's synchronous)
     // But mostly we want to verify dirtiness
     useEffect(() => {
+        if (!localData) return;
+
         let sectionKey = activeTab;
         if (activeTab === 'packages') sectionKey = 'mostBookedPackages';
 
@@ -125,6 +147,10 @@ const AdminPage = () => {
         });
     };
 
+    const handleTemplateChange = (e) => {
+        updatePageTemplate(slug || 'home', e.target.value);
+    };
+
     const renderSaveButton = () => (
         <div className="flex justify-end mb-6 sticky top-0 z-10 bg-gray-50 pt-4 pb-2">
             <button
@@ -141,12 +167,41 @@ const AdminPage = () => {
     );
 
 
+    if (!localData) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-xl font-semibold text-gray-400 animate-pulse">Loading Page Data...</div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 p-8">
             <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="bg-blue-900 text-white p-6">
-                    <h1 className="text-2xl font-bold">CMS Admin Dashboard</h1>
-                    <p className="text-blue-200">Manage your website content</p>
+                <div className="bg-blue-900 text-white p-6 flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold">CMS Admin Dashboard</h1>
+                        <div className="flex items-center gap-4 mt-1">
+                            <p className="text-blue-200">Editing Page: <span className="font-mono bg-blue-800 px-2 py-0.5 rounded text-white">{slug || 'home'}</span></p>
+                            <div className="flex items-center gap-2">
+                                <span className="text-blue-200 text-sm">Template:</span>
+                                <select
+                                    value={activeTemplate}
+                                    onChange={handleTemplateChange}
+                                    className="bg-blue-800 text-white text-sm px-2 py-0.5 rounded border border-blue-700 outline-none focus:ring-1 focus:ring-blue-400"
+                                >
+                                    <option value="default">Default</option>
+                                    <option value="minimal">Minimal</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => navigate('/admin')}
+                        className="bg-blue-800 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 border border-blue-700 cursor-pointer"
+                    >
+                        <span>←</span> Back to Dashboard
+                    </button>
                 </div>
 
                 {/* Tabs */}
@@ -180,6 +235,12 @@ const AdminPage = () => {
                         onClick={() => setActiveTab('faqs')}
                     >
                         FAQs
+                    </button>
+                    <button
+                        className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'contact' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('contact')}
+                    >
+                        Contact Info
                     </button>
                 </div>
 
@@ -550,6 +611,46 @@ const AdminPage = () => {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'contact' && (
+                        <div className="space-y-8">
+                            {renderSaveButton()}
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Contact Details</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number (with +91)</label>
+                                        <input
+                                            type="text"
+                                            value={localData.contact?.phone || ''}
+                                            onChange={(e) => updateLocalSection('contact', { phone: e.target.value })}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="+91 806 977 0000"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (digits only)</label>
+                                        <input
+                                            type="text"
+                                            value={localData.contact?.whatsapp || ''}
+                                            onChange={(e) => updateLocalSection('contact', { whatsapp: e.target.value })}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="918069770000"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Default Message</label>
+                                        <textarea
+                                            rows="2"
+                                            value={localData.contact?.whatsappMessage || ''}
+                                            onChange={(e) => updateLocalSection('contact', { whatsappMessage: e.target.value })}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

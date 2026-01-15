@@ -1,8 +1,9 @@
-import React from 'react';
-import * as FiIcons from 'react-icons/fi';
-import SafeIcon from '../common/SafeIcon';
+import { useCMS } from '../context/CMSContext';
 
 const Footer = () => {
+  const { data } = useCMS();
+  const phoneNumber = data.contact?.phone || '+91 806 977 0000';
+
   return (
     <footer className="bg-[#143a69] text-white py-12 overflow-hidden">
       <div className="container mx-auto px-4">
@@ -20,7 +21,12 @@ const Footer = () => {
           {/* Contact Number */}
           <div className="mt-4 text-center">
             <p className="text-white font-semibold mb-2">Contact Us</p>
-            <p className="text-gray-300">+91 806 977 0000</p>
+            <a
+              href={`tel:${phoneNumber}`}
+              className="text-gray-300 hover:text-white transition-colors"
+            >
+              {phoneNumber}
+            </a>
           </div>
         </div>
 
