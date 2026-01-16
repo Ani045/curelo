@@ -363,7 +363,7 @@ app.get(/^(?!\/api\/|\/health|\/lead).*/, (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Dev API server running at http://localhost:${PORT}`);
     console.log(`   POST /lead - Submit lead to LeadSquared`);
     console.log(`   GET /health - Health check\n`);
