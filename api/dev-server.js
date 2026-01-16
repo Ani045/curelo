@@ -24,6 +24,12 @@ const USERS_FILE = path.join(__dirname, '../data/users.json');
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase limit for potentially large CMS data
 
+// Request Logger
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - ${req.ip}`);
+    next();
+});
+
 // Serve static files from the 'dist' directory in production
 const DIST_PATH = path.join(__dirname, '../dist');
 if (fs.existsSync(DIST_PATH)) {
