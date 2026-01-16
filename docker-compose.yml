@@ -12,8 +12,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.api
-    ports:
-      - "3001:3001"
     volumes:
       - ./data:/app/data
     environment:
