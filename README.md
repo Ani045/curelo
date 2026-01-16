@@ -9,11 +9,11 @@ This project is a React-based landing page system with a built-in CMS and LeadSq
 Before you begin, ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v18 or higher recommended)
 - [npm](https://www.npmjs.com/) (usually comes with Node.js)
-- [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/) (optional, for containerized setup)
+- [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/) (Required for production/server setup)
 
 ---
 
-## 💻 Local Installation
+## 💻 Local Development
 
 1.  **Clone the repository:**
     ```bash
@@ -36,7 +36,7 @@ Before you begin, ensure you have the following installed:
     - `LEADSQUARED_SECRET_KEY`
 
 4.  **Initialize Data Files:**
-    Ensure the following files exist in the `data/` directory (created automatically on first run, but useful to know):
+    Ensure the following files exist in the `data/` directory (created automatically on first run):
     - `data/cms_data.json`: Stores all landing page configurations.
     - `data/users.json`: Stores administrator credentials.
 
@@ -50,63 +50,51 @@ Before you begin, ensure you have the following installed:
 
 ---
 
-## 🐳 Docker Installation
+## 🐳 Docker Deployment (Server/Production)
 
-If you prefer using Docker, you can spin up the entire environment with a single command:
+For servers and production environments, the project uses a robust dual-container architecture:
 
-1.  **Build and Start:**
-    ```bash
-    docker-compose up --build
-    ```
-    This will:
-    - Synchronize your local files with the container.
-    - Install dependencies inside the container.
-    - Start the development servers on ports **5173** (frontend) and **3001** (API).
+### Architecture Overview
+- **Nginx (web)**: Serves the built frontend assets and acts as a **Reverse Proxy** on port **80**.
+- **Node.js (api)**: Handles authentication, CMS data, and lead submissions on port **3001**.
 
----
+### 1. Build and Start
+On your server, run the following command to pull changes and start the stack:
+```bash
+docker-compose up --build -d
+```
+
+### 2. Accessing the App
+- **Public URL**: `http://<your-server-ip>`
+- **Admin Dashboard**: `http://<your-server-ip>/admin`
 
 ---
 
 ## 💾 Data Persistence
 
-This project uses file-based storage for CMS data and user credentials. To ensure your changes are not lost:
+This project uses file-based storage for CMS data and user credentials. 
 
-- **Local:** Data is saved directly to `data/cms_data.json` and `data/users.json`. Ensure you don't delete these files or the `data/` directory.
-- **Docker:** The `docker-compose.yml` file is configured with a bind mount (`- .:/app`), which links your host machine's directory to the container. This ensures that any data saved by the CMS *inside* the container is written back to your local `data/` folder and persists even if the container is stopped or removed.
+- **Local Development:** Data is saved directly to the `data/` directory.
+- **Docker/Server:** The `docker-compose.yml` file uses a volume mount (`./data:/app/data`). This ensures that your CMS changes and user settings persist on the host server even if the containers are removed or rebuilt.
+
+---
+
+## � Admin Access
+
+Access the admin dashboard at `/admin` to manage landing page content, change templates, and manage users.
+
+**Default Credentials:**
+- **Username**: `admin`
+- **Password**: `curelo@2026`
 
 ---
 
 ## 🛠 Project Structure
 
 - `src/`: React frontend source code.
-  - `pages/`: Page components (Home, Admin, Dashboard).
-  - `templates/`: Configurable landing page templates.
-  - `context/`: CMS and Authentication contexts.
 - `api/`: Express.js backend for lead submission and CMS persistence.
 - `data/`: JSON files for persistent data storage.
-- `Dockerfile` & `docker-compose.yml`: Containerization configuration.
-
----
-
-## 🚢 Production Build
-
-To build the project for production:
-
-1.  **Generate Build Assets:**
-    ```bash
-    npm run build
-    ```
-    The optimized files will be available in the `dist/` directory.
-
-2.  **Using Docker for Production:**
-    The provided `Dockerfile` uses a multi-stage build to serve the application using Nginx:
-    ```bash
-    docker build -t curelo-landing-page .
-    docker run -p 80:80 curelo-landing-page
-    ```
-
----
-
-## 🔑 Admin Access
-
-Access the admin dashboard at `/admin` to manage landing page content, change templates, and manage users. Default credentials can be found or configured in `data/users.json`.
+- `Dockerfile`: Multi-stage build for the Nginx frontend.
+- `Dockerfile.api`: Dockerfile for the Node.js API server.
+- `nginx.conf`: Reverse proxy and static file configuration.
+- `docker-compose.yml`: Multi-container orchestration.
