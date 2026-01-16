@@ -4,6 +4,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables
 dotenv.config();
@@ -11,9 +14,15 @@ dotenv.config();
 const app = express();
 const PORT = 3001;
 
+// Get __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_FILE = path.join(__dirname, '../data/cms_data.json');
+const USERS_FILE = path.join(__dirname, '../data/users.json');
+
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit for potentially large CMS data
 
 // LeadSquared API endpoint - mirrors the Vercel serverless function
 app.post('/lead', async (req, res) => {
@@ -188,9 +197,148 @@ app.post('/lead', async (req, res) => {
     }
 });
 
+// CMS API endpoints
+app.get('/api/cms', (req, res) => {
+    try {
+        if (!fs.existsSync(DATA_FILE)) {
+            return res.json({});
+        }
+        const data = fs.readFileSync(DATA_FILE, 'utf8');
+        res.json(JSON.parse(data));
+    } catch (error) {
+        console.error('Error reading CMS data:', error);
+        res.status(500).json({ error: 'Failed to read CMS data' });
+    }
+});
+
+app.post('/api/cms', (req, res) => {
+    try {
+        const data = req.body;
+        // Ensure data directory exists
+        const dataDir = path.dirname(DATA_FILE);
+        if (!fs.existsSync(dataDir)) {
+            fs.mkdirSync(dataDir, { recursive: true });
+        }
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+        console.log('CMS data saved successfully');
+        res.json({ success: true, message: 'CMS data saved successfully' });
+    } catch (error) {
+        console.error('Error saving CMS data:', error);
+        res.status(500).json({ error: 'Failed to save CMS data' });
+    }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Dev server is running' });
+});
+
+// Login endpoint
+app.post('/api/login', (req, res) => {
+    try {
+        let { username, password } = req.body;
+
+        // Trim inputs to avoid common whitespace issues
+        username = username?.trim();
+        password = password?.trim();
+
+        console.log(`--- Login Attempt ---`);
+        console.log(`Username: [${username}] (length: ${username?.length})`);
+        // We log password length and first/last char for safety
+        if (password) {
+            console.log(`Password length: ${password.length}`);
+            console.log(`Password starts with: ${password[0]}, ends with: ${password[password.length - 1]}`);
+        }
+
+        if (!fs.existsSync(USERS_FILE)) {
+            console.error('CRITICAL: Users file NOT FOUND at:', USERS_FILE);
+            return res.status(401).json({ success: false, message: 'Server configuration error' });
+        }
+
+        const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+        const user = users.find(u => u.username === username && u.password === password);
+
+        if (user) {
+            console.log(`SUCCESS: Login granted for ${username}`);
+            const { password, ...userData } = user;
+            res.json({ success: true, user: userData });
+        } else {
+            console.warn(`FAILURE: No match found for user [${username}] with the provided password.`);
+            // Additional check to see if username exists but password failed
+            const usernameExists = users.some(u => u.username === username);
+            if (usernameExists) {
+                console.warn(`DEBUG: Username [${username}] exists, but password did not match.`);
+            } else {
+                console.warn(`DEBUG: Username [${username}] does not exist in users.json. Available: ${users.map(u => u.username).join(', ')}`);
+            }
+            res.status(401).json({ success: false, message: 'Invalid username or password' });
+        }
+        console.log(`---------------------`);
+    } catch (error) {
+        console.error('Error during login:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// User management endpoints
+app.get('/api/users', (req, res) => {
+    try {
+        if (!fs.existsSync(USERS_FILE)) {
+            return res.json([]);
+        }
+        const users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+        // Don't send passwords back
+        const safeUsers = users.map(({ password, ...rest }) => rest);
+        res.json(safeUsers);
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+app.post('/api/users', (req, res) => {
+    try {
+        const newUser = req.body;
+        let users = [];
+        if (fs.existsSync(USERS_FILE)) {
+            users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+        }
+
+        if (users.find(u => u.username === newUser.username)) {
+            return res.status(400).json({ error: 'User already exists' });
+        }
+
+        users.push(newUser);
+        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+        res.json({ success: true, message: 'User added successfully' });
+    } catch (error) {
+        console.error('Error adding user:', error);
+        res.status(500).json({ error: 'Failed to add user' });
+    }
+});
+
+app.delete('/api/users/:username', (req, res) => {
+    try {
+        const { username } = req.params;
+        if (!fs.existsSync(USERS_FILE)) {
+            return res.status(404).json({ error: 'User data not found' });
+        }
+
+        let users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+        const userIndex = users.findIndex(u => u.username === username);
+
+        if (userIndex === -1) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Prevent deleting the last administrator if wanted, but for now let's just allow it
+        users.splice(userIndex, 1);
+        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+        res.json({ success: true, message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ error: 'Failed to delete user' });
+    }
 });
 
 app.listen(PORT, () => {

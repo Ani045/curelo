@@ -27,11 +27,11 @@ const LoginPage = () => {
         // Simulate a small delay for better UX
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        const success = login(credentials.username, credentials.password);
-        if (success) {
+        const result = await login(credentials.username, credentials.password);
+        if (result.success) {
             navigate(from, { replace: true });
         } else {
-            setError('Invalid username or password');
+            setError(result.message);
             setIsSubmitting(false);
         }
     };
@@ -85,9 +85,6 @@ const LoginPage = () => {
                         {isSubmitting ? 'Logging in...' : 'Login'}
                     </button>
 
-                    <p className="text-center text-[10px] text-gray-400">
-                        Default Credentials: <span className="font-mono">admin</span> / <span className="font-mono">admin123</span>
-                    </p>
                 </form>
             </div>
         </div>

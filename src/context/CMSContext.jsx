@@ -107,8 +107,11 @@ const defaultData = {
   }
 };
 
+const API_URL = '/api/cms';
 
 export const CMSProvider = ({ children }) => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [state, setState] = useState(() => {
     const savedData = localStorage.getItem('curelo_multi_cms_data');
     if (savedData) {
@@ -171,7 +174,50 @@ export const CMSProvider = ({ children }) => {
   });
 
   useEffect(() => {
+    const fetchCMSData = async () => {
+      try {
+        const response = await fetch(API_URL);
+        const serverData = await response.json();
+
+        if (serverData && serverData.pages) {
+          setState(serverData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch CMS data from server:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCMSData();
+  }, []);
+
+  // Still keep localStorage as a temporary backup for the current session
+  useEffect(() => {
     localStorage.setItem('curelo_multi_cms_data', JSON.stringify(state));
+  }, [state]);
+
+  const saveToServer = useCallback(async (dataToSave = state) => {
+    setSaving(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSave),
+      });
+      const result = await response.json();
+      if (result.success) {
+        return { success: true };
+      }
+      throw new Error(result.error || 'Failed to save');
+    } catch (error) {
+      console.error('Error saving to server:', error);
+      return { success: false, error: error.message };
+    } finally {
+      setSaving(false);
+    }
   }, [state]);
 
   const activePage = state.pages[state.activePageSlug] || state.pages['home'];
@@ -325,10 +371,10 @@ export const CMSProvider = ({ children }) => {
       updatePageTemplate,
       deletePage,
       getAllPages,
-      updateSection,
-      updateUSP,
-      updateTestCard,
-      updatePackage
+      updatePackage,
+      saveToServer,
+      loading,
+      saving
     }}>
       {children}
     </CMSContext.Provider>
