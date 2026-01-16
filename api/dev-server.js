@@ -24,6 +24,13 @@ const USERS_FILE = path.join(__dirname, '../data/users.json');
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase limit for potentially large CMS data
 
+// Serve static files from the 'dist' directory in production
+const DIST_PATH = path.join(__dirname, '../dist');
+if (fs.existsSync(DIST_PATH)) {
+    console.log(`Serving static files from: ${DIST_PATH}`);
+    app.use(express.static(DIST_PATH));
+}
+
 // LeadSquared API endpoint - mirrors the Vercel serverless function
 app.post('/lead', async (req, res) => {
     console.log('Received lead submission request');
@@ -338,6 +345,21 @@ app.delete('/api/users/:username', (req, res) => {
     } catch (error) {
         console.error('Error deleting user:', error);
         res.status(500).json({ error: 'Failed to delete user' });
+    }
+});
+
+// Catch-all route to serve the frontend (for React Router support)
+app.get(/^(?!\/api\/|\/health|\/lead).*/, (req, res) => {
+    // Skip if the request is an API call that wasn't caught by previous routes
+    if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/lead') {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+
+    const indexPath = path.join(DIST_PATH, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('Frontend build not found. Please run npm run build.');
     }
 });
 
