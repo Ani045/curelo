@@ -52,19 +52,32 @@ Before you begin, ensure you have the following installed:
 
 ## 🐳 Docker Deployment (Server/Production)
 
-For servers and production environments, the project uses a robust dual-container architecture:
+For servers and production environments, the project uses a hybrid architecture:
 
 ### Architecture Overview
-- **Nginx (web)**: Serves the built frontend assets and acts as a **Reverse Proxy** on port **80**.
-- **Node.js (api)**: Handles authentication, CMS data, and lead submissions on port **3001**.
+- **Host Nginx**: Serves the built frontend assets and acts as a **Reverse Proxy** on port **80**.
+- **Docker Node.js (api)**: Handles authentication, CMS data, and lead submissions on port **3001**.
 
-### 1. Build and Start
-On your server, run the following command to pull changes and start the stack:
+### 1. Build and Start API
+On your server, run the following command to start the API:
 ```bash
 docker-compose up --build -d
 ```
 
-### 2. Accessing the App
+### 2. Build Frontend
+Build the static assets on the host:
+```bash
+npm install
+npm run build
+```
+
+### 3. Configure Host Nginx
+1. Install Nginx on your host machine.
+2. Use the provided `nginx.conf` as a template for your site configuration.
+3. Update the `root` directive in your Nginx config to point to the absolute path of the `dist` folder.
+4. Restart Nginx: `sudo systemctl restart nginx`.
+
+### 4. Accessing the App
 - **Public URL**: `http://<your-server-ip>`
 - **Admin Dashboard**: `http://<your-server-ip>/admin`
 
@@ -79,7 +92,7 @@ This project uses file-based storage for CMS data and user credentials.
 
 ---
 
-## � Admin Access
+## 🔐 Admin Access
 
 Access the admin dashboard at `/admin` to manage landing page content, change templates, and manage users.
 
@@ -94,7 +107,6 @@ Access the admin dashboard at `/admin` to manage landing page content, change te
 - `src/`: React frontend source code.
 - `api/`: Express.js backend for lead submission and CMS persistence.
 - `data/`: JSON files for persistent data storage.
-- `Dockerfile`: Multi-stage build for the Nginx frontend.
 - `Dockerfile.api`: Dockerfile for the Node.js API server.
-- `nginx.conf`: Reverse proxy and static file configuration.
-- `docker-compose.yml`: Multi-container orchestration.
+- `nginx.conf`: Nginx configuration template for the host.
+- `docker-compose.yml`: Docker configuration for the API service.

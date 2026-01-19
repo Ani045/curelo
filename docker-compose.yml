@@ -1,17 +1,10 @@
 services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-    depends_on:
-      - api
-
   api:
     build:
       context: .
       dockerfile: Dockerfile.api
+    ports:
+      - "3001:3001"
     volumes:
       - ./data:/app/data
     environment:
