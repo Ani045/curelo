@@ -9,14 +9,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Load environment variables
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const PORT = 3001;
-
-// Get __dirname equivalent in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const DATA_FILE = path.join(__dirname, '../data/cms_data.json');
 const USERS_FILE = path.join(__dirname, '../data/users.json');
 
@@ -30,15 +28,10 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve static files from the 'dist' directory in production
-const DIST_PATH = path.join(__dirname, '../dist');
-if (fs.existsSync(DIST_PATH)) {
-    console.log(`Serving static files from: ${DIST_PATH}`);
-    app.use(express.static(DIST_PATH));
-}
+// Middleware will be added later
 
 // LeadSquared API endpoint - mirrors the Vercel serverless function
-app.post('/lead', async (req, res) => {
+app.post('/api/lead', async (req, res) => {
     console.log('Received lead submission request');
     console.log('Request body:', JSON.stringify(req.body, null, 2));
 
@@ -165,8 +158,9 @@ app.post('/lead', async (req, res) => {
 
         // Submit to LeadSquared API
         const leadSquaredUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/Lead.CreateOrUpdate?postUpdatedLead=false&accessKey=${accessKey}&secretKey=${secretKey}`;
+        const maskedUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/Lead.CreateOrUpdate?postUpdatedLead=false&accessKey=${accessKey?.substring(0, 5)}...&secretKey=${secretKey?.substring(0, 5)}...`;
 
-        console.log('Submitting to LeadSquared...');
+        console.log(`Submitting to LeadSquared: ${maskedUrl}`);
 
         const response = await fetch(leadSquaredUrl, {
             method: 'POST',
@@ -176,15 +170,18 @@ app.post('/lead', async (req, res) => {
             body: JSON.stringify(payload)
         });
 
+        console.log(`LeadSquared Response Status: ${response.status} ${response.statusText}`);
+
         const result = await response.json();
+        console.log('LeadSquared Full Response:', JSON.stringify(result, null, 2));
 
         // Check for LeadSquared API errors
-        if (result.Status === 'Error') {
-            console.error('LeadSquared API Error:', result.ExceptionMessage);
+        if (result.Status === 'Error' || result.Status === 'Failure') {
+            console.error('LeadSquared API Error:', result.ExceptionMessage || result.Message || 'Unknown error');
             return res.status(500).json({
                 success: false,
                 error: 'Failed to submit lead',
-                message: 'We encountered an issue processing your request. Please try again later.'
+                message: result.ExceptionMessage || 'LeadSquared API returned an error'
             });
         }
 
@@ -242,7 +239,7 @@ app.post('/api/cms', (req, res) => {
 });
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Dev server is running' });
 });
 
@@ -354,25 +351,36 @@ app.delete('/api/users/:username', (req, res) => {
     }
 });
 
-// Catch-all route to serve the frontend (for React Router support)
-app.get(/^(?!\/api\/|\/health|\/lead).*/, (req, res) => {
-    // Skip if the request is an API call that wasn't caught by previous routes
-    if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/lead') {
-        return res.status(404).json({ error: 'API endpoint not found' });
+// CMS data persistence helpers
+function saveCmsData(data) {
+    const dataDir = path.dirname(DATA_FILE);
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
     }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
 
-    const indexPath = path.join(DIST_PATH, 'index.html');
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        res.status(404).send('Frontend build not found. Please run npm run build.');
-    }
-});
+// Serve static files and handle SPA routing
+const DIST_PATH = path.join(__dirname, '../dist');
+if (fs.existsSync(DIST_PATH)) {
+    console.log(`Serving static files from: ${DIST_PATH}`);
+    app.use(express.static(DIST_PATH));
+
+    // Catch-all route to serve the frontend (for React Router support)
+    app.get(/^(?!\/api\/|\/health).*/, (req, res) => {
+        const indexPath = path.join(DIST_PATH, 'index.html');
+        if (fs.existsSync(indexPath)) {
+            res.sendFile(indexPath);
+        } else {
+            res.status(404).send('Frontend build not found.');
+        }
+    });
+}
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Dev API server running at http://localhost:${PORT}`);
-    console.log(`   POST /lead - Submit lead to LeadSquared`);
-    console.log(`   GET /health - Health check\n`);
+    console.log(`   POST /api/lead - Submit lead to LeadSquared`);
+    console.log(`   GET /api/health - Health check\n`);
 
     if (!process.env.LEADSQUARED_ACCESS_KEY || !process.env.LEADSQUARED_SECRET_KEY) {
         console.warn('⚠️  Warning: Using fallback credentials (from code)');
