@@ -32,8 +32,15 @@ const Footer = () => {
 
         {/* Bottom Section */}
         <div className="border-t border-white/20 pt-8 mt-8 text-center">
+          {/* Disclaimer */}
+          <div className="mb-6">
+            <p className="text-xs text-gray-400 font-semibold mb-2">Disclaimer:</p>
+            <p className="text-xs text-gray-400 max-w-3xl mx-auto leading-relaxed">
+              The information provided on this website is for general informational purposes only and should not be considered medical advice, diagnosis, or treatment. Results may vary from person to person. Please consult a qualified healthcare professional before making any health-related decisions. By using this website, you confirm that you are 18 years or older.
+            </p>
+          </div>
           <p className="text-xs text-gray-400">
-            © 2025 Curelo Health. All rights reserved.
+            © 2026 Curelo Health. All rights reserved.
           </p>
         </div>
       </div>
