@@ -104,7 +104,7 @@ const AdminDashboard = () => {
     const handlePublish = async () => {
         const result = await saveToServer();
         if (result.success) {
-            alert('Changes published to server successfully!');
+            alert('Changes saved and published to server successfully!');
         } else {
             alert('Failed to publish: ' + result.error);
         }
@@ -156,10 +156,10 @@ const AdminDashboard = () => {
                             {saving ? (
                                 <>
                                     <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    Publishing...
+                                    Saving & Publishing...
                                 </>
                             ) : (
-                                <>Publish Changes</>
+                                <>Save & Publish</>
                             )}
                         </button>
                     </div>

@@ -45,7 +45,7 @@ const ImageUpload = ({ label, currentImage, onImageChange }) => {
 const AdminPage = () => {
     const { slug } = useParams();
     const navigate = useNavigate();
-    const { data, updateSection, setActivePage, activePageSlug, getAllPages, activeTemplate, updatePageTemplate, saveToServer, saving, loading } = useCMS();
+    const { data, updateSection, updateSectionAndSave, setActivePage, activePageSlug, getAllPages, activeTemplate, updatePageTemplate, saveToServer, saving, loading } = useCMS();
     const [localData, setLocalData] = useState(data);
     const [activeTab, setActiveTab] = useState('hero');
     const [isDirty, setIsDirty] = useState(false);
@@ -84,11 +84,6 @@ const AdminPage = () => {
     }, [localData, data, activeTab]);
 
 
-    const handleSave = () => {
-        let sectionKey = activeTab;
-        if (activeTab === 'packages') sectionKey = 'mostBookedPackages';
-        updateSection(sectionKey, localData[sectionKey]);
-    };
 
     const updateLocalSection = (section, updates) => {
         setLocalData(prev => ({
@@ -151,43 +146,37 @@ const AdminPage = () => {
         updatePageTemplate(slug || 'home', e.target.value);
     };
 
-    const handlePublish = async () => {
-        const result = await saveToServer();
+    const handleSaveAndPublish = async () => {
+        let sectionKey = activeTab;
+        if (activeTab === 'packages') sectionKey = 'mostBookedPackages';
+
+        const result = await updateSectionAndSave(sectionKey, localData[sectionKey]);
+
         if (result.success) {
-            alert('Changes published to server successfully!');
+            alert('Changes saved and published to server successfully!');
         } else {
-            alert('Failed to publish changes: ' + result.error);
+            alert('Failed to save and publish: ' + result.error);
         }
     };
 
     const renderSaveButton = () => (
         <div className="flex justify-end items-center gap-4 mb-6 sticky top-0 z-10 bg-gray-50 pt-4 pb-2">
             <button
-                onClick={handleSave}
-                disabled={!isDirty}
-                className={`px-6 py-2 rounded-lg font-semibold transition-colors ${isDirty
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    }`}
-            >
-                {isDirty ? 'Save Locally' : 'Saved Locally'}
-            </button>
-            <button
-                onClick={handlePublish}
-                disabled={saving || isDirty}
-                className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${saving || isDirty
+                onClick={handleSaveAndPublish}
+                disabled={saving || !isDirty}
+                className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${saving || !isDirty
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed border'
                     : 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
                     }`}
-                title={isDirty ? "Save changes locally first" : "Publish all changes to the server"}
+                title={isDirty ? "Save and publish changes to the server" : "No unsaved changes"}
             >
                 {saving ? (
                     <>
                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                        Publishing...
+                        Saving & Publishing...
                     </>
                 ) : (
-                    <>Publish to Server</>
+                    <>Save & Publish</>
                 )}
             </button>
         </div>

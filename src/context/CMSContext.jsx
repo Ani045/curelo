@@ -298,6 +298,30 @@ export const CMSProvider = ({ children }) => {
     });
   }, []);
 
+  const updateSectionAndSave = useCallback(async (section, newData) => {
+    let latestState;
+    setState(prev => {
+      const currentPage = prev.pages[prev.activePageSlug];
+      latestState = {
+        ...prev,
+        pages: {
+          ...prev.pages,
+          [prev.activePageSlug]: {
+            ...currentPage,
+            data: {
+              ...currentPage.data,
+              [section]: { ...currentPage.data[section], ...newData }
+            }
+          }
+        }
+      };
+      return latestState;
+    });
+
+    // Use the latest state for saving
+    return await saveToServer(latestState);
+  }, [saveToServer]);
+
   const updateUSP = useCallback((index, field, value) => {
     setState(prev => {
       const currentPage = prev.pages[prev.activePageSlug];
@@ -372,6 +396,10 @@ export const CMSProvider = ({ children }) => {
       deletePage,
       getAllPages,
       updatePackage,
+      updateSection,
+      updateSectionAndSave,
+      updateUSP,
+      updateTestCard,
       saveToServer,
       loading,
       saving
