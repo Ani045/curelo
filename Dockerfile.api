@@ -7,6 +7,7 @@ RUN npm install --production
 
 COPY api ./api
 COPY data ./data
+COPY dist ./dist
 
 EXPOSE 3001
 

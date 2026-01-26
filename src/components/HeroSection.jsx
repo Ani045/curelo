@@ -39,7 +39,7 @@ const getUrlSlug = () => {
     // Note: We no longer replace internal slashes with underscores as per user request
 
     // Remove any potentially dangerous characters - allow alphanumeric, hyphens, underscores, and slashes
-    slug = slug.replace(/[^a-zA-Z0-9\-_\/]/g, '');
+    slug = slug.replace(/[^a-zA-Z0-9\-_]/g, '');
 
     // Limit length to prevent abuse (max 100 characters)
     slug = slug.substring(0, 100);
