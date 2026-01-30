@@ -207,14 +207,29 @@ export const CMSProvider = ({ children }) => {
         },
         body: JSON.stringify(dataToSave),
       });
-      const result = await response.json();
-      if (result.success) {
-        return { success: true };
+
+      if (response.status === 413) {
+        throw new Error('Total image size too large! Please use smaller images or compress them (Max total size: 50MB).');
       }
-      throw new Error(result.error || 'Failed to save');
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Failed to save';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // If not JSON, use a generic message or snippet of the response
+          errorMessage = `Server error (${response.status})`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      return { success: true };
     } catch (error) {
       console.error('Error saving to server:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message || 'An unexpected error occurred' };
     } finally {
       setSaving(false);
     }
