@@ -109,6 +109,30 @@ const defaultData = {
 
 const API_URL = '/api/cms';
 
+const compressImage = (base64Str, maxWidth = 1200, quality = 0.7) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(base64Str); // Fallback to original if error
+  });
+};
+
 export const CMSProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -191,6 +215,15 @@ export const CMSProvider = ({ children }) => {
         const serverData = await response.json();
 
         if (serverData && serverData.pages) {
+          // Safety: Always ensure 'home' exists in the server data
+          if (!serverData.pages.home) {
+            serverData.pages.home = {
+              title: 'Home Page',
+              slug: 'home',
+              template: 'default',
+              data: defaultData
+            };
+          }
           setState(serverData);
         }
       } catch (error) {

@@ -12,10 +12,13 @@ const HomePage = () => {
   useEffect(() => {
     const pageSlug = slug || 'home';
     const pages = getAllPages();
-    if (pages.some(p => p.slug === pageSlug)) {
+    const pageExists = pages.some(p => p.slug === pageSlug);
+
+    if (pageExists) {
       setActivePage(pageSlug);
-    } else {
-      navigate('/');
+    } else if (slug) {
+      // Only redirect if there was a slug and it was invalid
+      navigate('/', { replace: true });
     }
   }, [slug, setActivePage, getAllPages, navigate]);
 

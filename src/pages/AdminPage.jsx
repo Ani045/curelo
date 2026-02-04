@@ -8,8 +8,33 @@ const ImageUpload = ({ label, currentImage, onImageChange }) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                onImageChange(reader.result);
+            reader.onloadend = async () => {
+                const result = reader.result;
+                // Basic check - if file is > 200kb, compress it
+                if (file.size > 200 * 1024) {
+                    const img = new Image();
+                    img.src = result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_WIDTH = 1200;
+
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                        onImageChange(compressed);
+                    };
+                } else {
+                    onImageChange(result);
+                }
             };
             reader.readAsDataURL(file);
         }
