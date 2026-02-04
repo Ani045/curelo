@@ -20,7 +20,7 @@ const USERS_FILE = path.join(__dirname, '../data/users.json');
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Increase limit for potentially large CMS data, including multiple images
+app.use(express.json({ limit: '100mb' })); // Increase limit for potentially large CMS data, including multiple images (increased to 100mb to handle base64 overhead)
 
 // Request Logger
 app.use((req, res, next) => {

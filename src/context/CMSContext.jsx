@@ -194,7 +194,15 @@ export const CMSProvider = ({ children }) => {
 
   // Still keep localStorage as a temporary backup for the current session
   useEffect(() => {
-    localStorage.setItem('curelo_multi_cms_data', JSON.stringify(state));
+    try {
+      localStorage.setItem('curelo_multi_cms_data', JSON.stringify(state));
+    } catch (error) {
+      if (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        console.warn('CMS backup storage limit reached (likely due to large images). Changes are only saved in session memory until you Publish.');
+      } else {
+        console.error('Failed to save CMS data to localStorage:', error);
+      }
+    }
   }, [state]);
 
   const saveToServer = useCallback(async (dataToSave = state) => {
