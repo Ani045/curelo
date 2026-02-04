@@ -113,54 +113,7 @@ export const CMSProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [state, setState] = useState(() => {
-    const savedData = localStorage.getItem('curelo_multi_cms_data');
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      // Ensure all pages have the latest default sections
-      const mergedPages = {};
-      Object.keys(parsed.pages).forEach(slug => {
-        mergedPages[slug] = {
-          ...parsed.pages[slug],
-          template: parsed.pages[slug].template || 'default',
-          data: {
-            ...defaultData,
-            ...parsed.pages[slug].data
-          }
-        };
-      });
-      return {
-        ...parsed,
-        pages: mergedPages
-      };
-    }
-
-    // Migration from old single-page format
-    const oldData = localStorage.getItem('curelo_cms_data');
-    if (oldData) {
-      const parsed = JSON.parse(oldData);
-      return {
-        pages: {
-          home: {
-            title: 'Home Page',
-            slug: 'home',
-            template: 'default',
-            data: {
-              ...defaultData,
-              ...parsed,
-              hero: { ...defaultData.hero, ...parsed.hero },
-              testDetails: { ...defaultData.testDetails, ...parsed.testDetails },
-              mostBookedPackages: { ...defaultData.mostBookedPackages, ...parsed.mostBookedPackages },
-              whyChooseUs: { ...defaultData.whyChooseUs, ...parsed.whyChooseUs || {} },
-              faqs: { ...defaultData.faqs, ...parsed.faqs || {} },
-              contact: { ...defaultData.contact, ...parsed.contact || {} }
-            }
-          }
-        },
-        activePageSlug: 'home'
-      };
-    }
-
-    return {
+    const initialState = {
       pages: {
         home: {
           title: 'Home Page',
@@ -171,6 +124,64 @@ export const CMSProvider = ({ children }) => {
       },
       activePageSlug: 'home'
     };
+
+    try {
+      const savedData = localStorage.getItem('curelo_multi_cms_data');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (!parsed || !parsed.pages) return initialState;
+
+        // Ensure all pages have the latest default sections
+        const mergedPages = {};
+        Object.keys(parsed.pages).forEach(slug => {
+          mergedPages[slug] = {
+            ...parsed.pages[slug],
+            template: parsed.pages[slug].template || 'default',
+            data: {
+              ...defaultData,
+              ...parsed.pages[slug].data
+            }
+          };
+        });
+        return {
+          ...parsed,
+          pages: mergedPages,
+          activePageSlug: parsed.activePageSlug || 'home'
+        };
+      }
+
+      // Migration from old single-page format
+      const oldData = localStorage.getItem('curelo_cms_data');
+      if (oldData) {
+        const parsed = JSON.parse(oldData);
+        if (!parsed) return initialState;
+
+        return {
+          pages: {
+            home: {
+              title: 'Home Page',
+              slug: 'home',
+              template: 'default',
+              data: {
+                ...defaultData,
+                ...parsed,
+                hero: { ...defaultData.hero, ...parsed.hero },
+                testDetails: { ...defaultData.testDetails, ...parsed.testDetails },
+                mostBookedPackages: { ...defaultData.mostBookedPackages, ...parsed.mostBookedPackages },
+                whyChooseUs: { ...defaultData.whyChooseUs, ...parsed.whyChooseUs || {} },
+                faqs: { ...defaultData.faqs, ...parsed.faqs || {} },
+                contact: { ...defaultData.contact, ...parsed.contact || {} }
+              }
+            }
+          },
+          activePageSlug: 'home'
+        };
+      }
+    } catch (error) {
+      console.error('Error initializing CMS state from localStorage:', error);
+    }
+
+    return initialState;
   });
 
   useEffect(() => {
@@ -243,8 +254,12 @@ export const CMSProvider = ({ children }) => {
     }
   }, [state]);
 
-  const activePage = state.pages[state.activePageSlug] || state.pages['home'];
-  const data = activePage.data;
+  // Defensive data selection
+  const activePage = (state.pages && state.pages[state.activePageSlug])
+    || (state.pages && state.pages['home'])
+    || { title: 'Home', slug: 'home', template: 'default', data: defaultData };
+
+  const data = activePage.data || defaultData;
 
   const setActivePage = useCallback((slug) => {
     if (state.pages[slug]) {
