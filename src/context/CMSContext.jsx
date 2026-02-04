@@ -109,7 +109,21 @@ const defaultData = {
 
 const API_URL = '/api/cms';
 
+const deepMerge = (target, source) => {
+  if (!source) return target;
+  const merged = { ...target };
+  Object.keys(source).forEach(key => {
+    if (source[key] instanceof Object && !Array.isArray(source[key])) {
+      merged[key] = deepMerge(target[key] || {}, source[key]);
+    } else {
+      merged[key] = source[key];
+    }
+  });
+  return merged;
+};
+
 const compressImage = (base64Str, maxWidth = 1200, quality = 0.7) => {
+  if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith('data:image')) return Promise.resolve(base64Str);
   return new Promise((resolve) => {
     const img = new Image();
     img.src = base64Str;
@@ -129,8 +143,52 @@ const compressImage = (base64Str, maxWidth = 1200, quality = 0.7) => {
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
-    img.onerror = () => resolve(base64Str); // Fallback to original if error
+    img.onerror = () => resolve(base64Str);
   });
+};
+
+const cleanState = (data) => {
+  if (!data || !data.pages) return data;
+  const cleanedPages = {};
+  Object.keys(data.pages).forEach(slug => {
+    const page = data.pages[slug];
+    cleanedPages[slug] = {
+      ...page,
+      data: deepMerge(defaultData, page.data || {})
+    };
+  });
+
+  if (!cleanedPages.home) {
+    cleanedPages.home = {
+      title: 'Home Page',
+      slug: 'home',
+      template: 'default',
+      data: defaultData
+    };
+  }
+
+  return {
+    ...data,
+    pages: cleanedPages,
+    activePageSlug: data.activePageSlug || 'home'
+  };
+};
+
+const compressStateImages = async (data) => {
+  const result = JSON.parse(JSON.stringify(data)); // Deep clone
+
+  const processObject = async (obj) => {
+    for (const key in obj) {
+      if (typeof obj[key] === 'string' && obj[key].startsWith('data:image')) {
+        obj[key] = await compressImage(obj[key]);
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        await processObject(obj[key]);
+      }
+    }
+  };
+
+  await processObject(result);
+  return result;
 };
 
 export const CMSProvider = ({ children }) => {
@@ -215,16 +273,7 @@ export const CMSProvider = ({ children }) => {
         const serverData = await response.json();
 
         if (serverData && serverData.pages) {
-          // Safety: Always ensure 'home' exists in the server data
-          if (!serverData.pages.home) {
-            serverData.pages.home = {
-              title: 'Home Page',
-              slug: 'home',
-              template: 'default',
-              data: defaultData
-            };
-          }
-          setState(serverData);
+          setState(cleanState(serverData));
         }
       } catch (error) {
         console.error('Failed to fetch CMS data from server:', error);

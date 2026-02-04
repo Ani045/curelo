@@ -22,7 +22,13 @@ const HomePage = () => {
     }
   }, [slug, setActivePage, getAllPages, navigate]);
 
-  if (!data) return null;
+  if (!data || !data.hero) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-xl font-semibold text-gray-400 animate-pulse">Loading Page Data...</div>
+      </div>
+    );
+  }
 
   const renderTemplate = () => {
     switch (activeTemplate) {
