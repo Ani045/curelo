@@ -122,8 +122,11 @@ const deepMerge = (target, source) => {
   return merged;
 };
 
-const compressImage = (base64Str, maxWidth = 1200, quality = 0.7) => {
+const compressImage = (base64Str, maxWidth = 1000, quality = 0.5) => {
   if (!base64Str || typeof base64Str !== 'string' || !base64Str.startsWith('data:image')) return Promise.resolve(base64Str);
+
+  const originalSize = base64Str.length;
+
   return new Promise((resolve) => {
     const img = new Image();
     img.src = base64Str;
@@ -141,9 +144,15 @@ const compressImage = (base64Str, maxWidth = 1200, quality = 0.7) => {
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
+
+      const result = canvas.toDataURL('image/jpeg', quality);
+      console.log(`[CMS] Compressed image: ${(originalSize / 1024).toFixed(1)}KB -> ${(result.length / 1024).toFixed(1)}KB`);
+      resolve(result);
     };
-    img.onerror = () => resolve(base64Str);
+    img.onerror = () => {
+      console.warn('[CMS] Failed to load image for compression, sending original.');
+      resolve(base64Str);
+    };
   });
 };
 
@@ -300,235 +309,247 @@ export const CMSProvider = ({ children }) => {
 
   const saveToServer = useCallback(async (dataToSave = state) => {
     setSaving(true);
+    console.log('[CMS] Starting Save \u0026 Publish sequence...');
     try {
-      // Proactively clean and compress everything before sending
+      // 1. Clean the data to ensure all sections exist
       const cleaned = cleanState(dataToSave);
+
+      // 2. Proactively compress every image in the state
+      console.log('[CMS] Auditing images...');
       const compressed = await compressStateImages(cleaned);
 
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(compressed),
-      });
+      const payload = JSON.stringify(compressed);
+      console.log(`[CMS] Final payload size: ${(payload.length / 1024).toFixed(1)}KB`);
 
-      if (response.status === 413) {
-        throw new Error('Total website size is still too large even after compression! Please try using fewer large images.');
-      }
+      if (payload.length \u003e 4 * 1024 * 1024) {
+        console.warn(`[CMS] Payload is still large (${(payload.length / 1024 / 1024).toFixed(2)}MB). Attempting to proceed...`);
+}
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = 'Failed to save';
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
-          errorMessage = `Server error (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
+const response = await fetch(API_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: payload,
+});
 
-      const result = await response.json();
-      setState(compressed); // Update local state with the cleaned/compressed version
-      return { success: true };
+if (response.status === 413) {
+  throw new Error('Total website size is still too large even after compression! Please try using fewer large images.');
+}
+
+if (!response.ok) {
+  const errorText = await response.text();
+  let errorMessage = 'Failed to save';
+  try {
+    const errorData = JSON.parse(errorText);
+    errorMessage = errorData.error || errorData.message || errorMessage;
+  } catch (e) {
+    errorMessage = `Server error (${response.status})`;
+  }
+  throw new Error(errorMessage);
+}
+
+// 3. Update local state with the cleaned and compressed version
+setState(compressed);
+console.log('[CMS] Save successful!');
+return { success: true };
     } catch (error) {
-      console.error('Error saving to server:', error);
-      return { success: false, error: error.message || 'An unexpected error occurred' };
-    } finally {
-      setSaving(false);
-    }
+  console.error('[CMS] Save failed:', error);
+  return { success: false, error: error.message || 'An unexpected error occurred' };
+} finally {
+  setSaving(false);
+}
   }, [state]);
 
-  // Defensive data selection
-  const activePage = (state.pages && state.pages[state.activePageSlug])
-    || (state.pages && state.pages['home'])
-    || { title: 'Home', slug: 'home', template: 'default', data: defaultData };
+// Defensive data selection
+const activePage = (state.pages && state.pages[state.activePageSlug])
+  || (state.pages && state.pages['home'])
+  || { title: 'Home', slug: 'home', template: 'default', data: defaultData };
 
-  const data = activePage.data || defaultData;
+const data = activePage.data || defaultData;
 
-  const setActivePage = useCallback((slug) => {
-    if (state.pages[slug]) {
-      setState(prev => ({ ...prev, activePageSlug: slug }));
+const setActivePage = useCallback((slug) => {
+  if (state.pages[slug]) {
+    setState(prev => ({ ...prev, activePageSlug: slug }));
+  }
+}, [state.pages]);
+
+const createPage = useCallback((slug, title, template = 'default') => {
+  if (state.pages[slug]) return false;
+
+  setState(prev => ({
+    ...prev,
+    pages: {
+      ...prev.pages,
+      [slug]: {
+        title,
+        slug,
+        template,
+        data: defaultData
+      }
     }
-  }, [state.pages]);
+  }));
+  return true;
+}, [state.pages]);
 
-  const createPage = useCallback((slug, title, template = 'default') => {
-    if (state.pages[slug]) return false;
+const updatePageTemplate = useCallback((slug, template) => {
+  setState(prev => ({
+    ...prev,
+    pages: {
+      ...prev.pages,
+      [slug]: {
+        ...prev.pages[slug],
+        template
+      }
+    }
+  }));
+}, []);
 
-    setState(prev => ({
+const deletePage = useCallback((slug) => {
+  if (slug === 'home') return false;
+
+  setState(prev => {
+    const newPages = { ...prev.pages };
+    delete newPages[slug];
+    return {
+      ...prev,
+      pages: newPages,
+      activePageSlug: prev.activePageSlug === slug ? 'home' : prev.activePageSlug
+    };
+  });
+  return true;
+}, []);
+
+const getAllPages = useCallback(() => {
+  return Object.values(state.pages).map(p => ({ title: p.title, slug: p.slug, template: p.template }));
+}, [state.pages]);
+
+const updateSection = useCallback((section, newData) => {
+  setState(prev => {
+    const currentPage = prev.pages[prev.activePageSlug];
+    return {
       ...prev,
       pages: {
         ...prev.pages,
-        [slug]: {
-          title,
-          slug,
-          template,
-          data: defaultData
+        [prev.activePageSlug]: {
+          ...currentPage,
+          data: {
+            ...currentPage.data,
+            [section]: { ...currentPage.data[section], ...newData }
+          }
         }
       }
-    }));
-    return true;
-  }, [state.pages]);
+    };
+  });
+}, []);
 
-  const updatePageTemplate = useCallback((slug, template) => {
-    setState(prev => ({
+const updateSectionAndSave = useCallback(async (section, newData) => {
+  let latestState;
+  setState(prev => {
+    const currentPage = prev.pages[prev.activePageSlug];
+    latestState = {
       ...prev,
       pages: {
         ...prev.pages,
-        [slug]: {
-          ...prev.pages[slug],
-          template
+        [prev.activePageSlug]: {
+          ...currentPage,
+          data: {
+            ...currentPage.data,
+            [section]: { ...currentPage.data[section], ...newData }
+          }
         }
       }
-    }));
-  }, []);
+    };
+    return latestState;
+  });
 
-  const deletePage = useCallback((slug) => {
-    if (slug === 'home') return false;
+  // Use the latest state for saving
+  return await saveToServer(latestState);
+}, [saveToServer]);
 
-    setState(prev => {
-      const newPages = { ...prev.pages };
-      delete newPages[slug];
-      return {
-        ...prev,
-        pages: newPages,
-        activePageSlug: prev.activePageSlug === slug ? 'home' : prev.activePageSlug
-      };
-    });
-    return true;
-  }, []);
-
-  const getAllPages = useCallback(() => {
-    return Object.values(state.pages).map(p => ({ title: p.title, slug: p.slug, template: p.template }));
-  }, [state.pages]);
-
-  const updateSection = useCallback((section, newData) => {
-    setState(prev => {
-      const currentPage = prev.pages[prev.activePageSlug];
-      return {
-        ...prev,
-        pages: {
-          ...prev.pages,
-          [prev.activePageSlug]: {
-            ...currentPage,
-            data: {
-              ...currentPage.data,
-              [section]: { ...currentPage.data[section], ...newData }
-            }
+const updateUSP = useCallback((index, field, value) => {
+  setState(prev => {
+    const currentPage = prev.pages[prev.activePageSlug];
+    const newUSPs = [...currentPage.data.hero.usps];
+    newUSPs[index] = { ...newUSPs[index], [field]: value };
+    return {
+      ...prev,
+      pages: {
+        ...prev.pages,
+        [prev.activePageSlug]: {
+          ...currentPage,
+          data: {
+            ...currentPage.data,
+            hero: { ...currentPage.data.hero, usps: newUSPs }
           }
         }
-      };
-    });
-  }, []);
+      }
+    };
+  });
+}, []);
 
-  const updateSectionAndSave = useCallback(async (section, newData) => {
-    let latestState;
-    setState(prev => {
-      const currentPage = prev.pages[prev.activePageSlug];
-      latestState = {
-        ...prev,
-        pages: {
-          ...prev.pages,
-          [prev.activePageSlug]: {
-            ...currentPage,
-            data: {
-              ...currentPage.data,
-              [section]: { ...currentPage.data[section], ...newData }
-            }
+const updateTestCard = useCallback((index, field, value) => {
+  setState(prev => {
+    const currentPage = prev.pages[prev.activePageSlug];
+    const newCards = [...currentPage.data.testDetails.cards];
+    newCards[index] = { ...newCards[index], [field]: value };
+    return {
+      ...prev,
+      pages: {
+        ...prev.pages,
+        [prev.activePageSlug]: {
+          ...currentPage,
+          data: {
+            ...currentPage.data,
+            testDetails: { ...currentPage.data.testDetails, cards: newCards }
           }
         }
-      };
-      return latestState;
-    });
+      }
+    };
+  });
+}, []);
 
-    // Use the latest state for saving
-    return await saveToServer(latestState);
-  }, [saveToServer]);
-
-  const updateUSP = useCallback((index, field, value) => {
-    setState(prev => {
-      const currentPage = prev.pages[prev.activePageSlug];
-      const newUSPs = [...currentPage.data.hero.usps];
-      newUSPs[index] = { ...newUSPs[index], [field]: value };
-      return {
-        ...prev,
-        pages: {
-          ...prev.pages,
-          [prev.activePageSlug]: {
-            ...currentPage,
-            data: {
-              ...currentPage.data,
-              hero: { ...currentPage.data.hero, usps: newUSPs }
-            }
+const updatePackage = useCallback((index, field, value) => {
+  setState(prev => {
+    const currentPage = prev.pages[prev.activePageSlug];
+    const newPackages = [...currentPage.data.mostBookedPackages.packages];
+    newPackages[index] = { ...newPackages[index], [field]: value };
+    return {
+      ...prev,
+      pages: {
+        ...prev.pages,
+        [prev.activePageSlug]: {
+          ...currentPage,
+          data: {
+            ...currentPage.data,
+            mostBookedPackages: { ...currentPage.data.mostBookedPackages, packages: newPackages }
           }
         }
-      };
-    });
-  }, []);
+      }
+    };
+  });
+}, []);
 
-  const updateTestCard = useCallback((index, field, value) => {
-    setState(prev => {
-      const currentPage = prev.pages[prev.activePageSlug];
-      const newCards = [...currentPage.data.testDetails.cards];
-      newCards[index] = { ...newCards[index], [field]: value };
-      return {
-        ...prev,
-        pages: {
-          ...prev.pages,
-          [prev.activePageSlug]: {
-            ...currentPage,
-            data: {
-              ...currentPage.data,
-              testDetails: { ...currentPage.data.testDetails, cards: newCards }
-            }
-          }
-        }
-      };
-    });
-  }, []);
-
-  const updatePackage = useCallback((index, field, value) => {
-    setState(prev => {
-      const currentPage = prev.pages[prev.activePageSlug];
-      const newPackages = [...currentPage.data.mostBookedPackages.packages];
-      newPackages[index] = { ...newPackages[index], [field]: value };
-      return {
-        ...prev,
-        pages: {
-          ...prev.pages,
-          [prev.activePageSlug]: {
-            ...currentPage,
-            data: {
-              ...currentPage.data,
-              mostBookedPackages: { ...currentPage.data.mostBookedPackages, packages: newPackages }
-            }
-          }
-        }
-      };
-    });
-  }, []);
-
-  return (
-    <CMSContext.Provider value={{
-      data,
-      activePageSlug: state.activePageSlug,
-      activeTemplate: activePage.template,
-      setActivePage,
-      createPage,
-      updatePageTemplate,
-      deletePage,
-      getAllPages,
-      updatePackage,
-      updateSection,
-      updateSectionAndSave,
-      updateUSP,
-      updateTestCard,
-      saveToServer,
-      loading,
-      saving
-    }}>
-      {children}
-    </CMSContext.Provider>
-  );
+return (
+  <CMSContext.Provider value={{
+    data,
+    activePageSlug: state.activePageSlug,
+    activeTemplate: activePage.template,
+    setActivePage,
+    createPage,
+    updatePageTemplate,
+    deletePage,
+    getAllPages,
+    updatePackage,
+    updateSection,
+    updateSectionAndSave,
+    updateUSP,
+    updateTestCard,
+    saveToServer,
+    loading,
+    saving
+  }}>
+    {children}
+  </CMSContext.Provider>
+);
 };
