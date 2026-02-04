@@ -150,8 +150,16 @@ const compressImage = (base64Str, maxWidth = 1000, quality = 0.5) => {
       resolve(result);
     };
     img.onerror = () => {
-      console.warn('[CMS] Failed to load image for compression, sending original.');
-      resolve(base64Str);
+      // CRITICAL: If image is invalid AND large, sending the original will cause a 413.
+      // We drop the corrupt image to save the payload if it's > 500KB.
+      if (originalSize > 500 * 1024) {
+        console.warn(`[CMS] Found invalid/corrupt oversized image (${(originalSize / 1024).toFixed(1)}KB). Clearing it to prevent 413 error.`);
+        // Return a tiny 1x1 transparent pixel instead of the 11MB junk
+        resolve('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+      } else {
+        console.warn('[CMS] Failed to load small image for compression, sending original.');
+        resolve(base64Str);
+      }
     };
   });
 };
