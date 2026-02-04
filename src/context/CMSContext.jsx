@@ -301,16 +301,20 @@ export const CMSProvider = ({ children }) => {
   const saveToServer = useCallback(async (dataToSave = state) => {
     setSaving(true);
     try {
+      // Proactively clean and compress everything before sending
+      const cleaned = cleanState(dataToSave);
+      const compressed = await compressStateImages(cleaned);
+
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(dataToSave),
+        body: JSON.stringify(compressed),
       });
 
       if (response.status === 413) {
-        throw new Error('Total image size too large! Please use smaller images or compress them (Max total size: 50MB).');
+        throw new Error('Total website size is still too large even after compression! Please try using fewer large images.');
       }
 
       if (!response.ok) {
@@ -320,13 +324,13 @@ export const CMSProvider = ({ children }) => {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorData.message || errorMessage;
         } catch (e) {
-          // If not JSON, use a generic message or snippet of the response
           errorMessage = `Server error (${response.status})`;
         }
         throw new Error(errorMessage);
       }
 
       const result = await response.json();
+      setState(compressed); // Update local state with the cleaned/compressed version
       return { success: true };
     } catch (error) {
       console.error('Error saving to server:', error);
