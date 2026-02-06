@@ -315,19 +315,46 @@ export const CMSProvider = ({ children }) => {
     }
   }, [state]);
 
-  const saveToServer = useCallback(async (dataToSave = state) => {
+  const saveToServer = useCallback(async (dataToSave = state, forceFull = false) => {
     setSaving(true);
-    console.log('[CMS] Starting Save \u0026 Publish sequence...');
+    console.log('[CMS] Starting Save sequence...');
     try {
-      // 1. Clean the data to ensure all sections exist
-      const cleaned = cleanState(dataToSave);
+      let payload;
+      let isPartial = false;
 
-      // 2. Proactively compress every image in the state
-      console.log('[CMS] Auditing images...');
-      const compressed = await compressStateImages(cleaned);
+      // Determine if we should do a partial update (current page only)
+      if (!forceFull && dataToSave.activePageSlug && dataToSave.pages[dataToSave.activePageSlug]) {
+        console.log(`[CMS] Preparing partial payload for: ${dataToSave.activePageSlug}`);
+        const activePage = dataToSave.pages[dataToSave.activePageSlug];
 
-      const payload = JSON.stringify(compressed);
-      console.log(`[CMS] Final payload size: ${(payload.length / 1024).toFixed(1)}KB`);
+        // Clean and compress ONLY the active page
+        const cleanedActivePage = {
+          ...activePage,
+          data: deepMerge(defaultData, activePage.data || {})
+        };
+
+        // Compress images recursively in the single page data
+        const processObject = async (obj) => {
+          for (const key in obj) {
+            if (typeof obj[key] === 'string' && obj[key].startsWith('data:image')) {
+              obj[key] = await compressImage(obj[key]);
+            } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+              await processObject(obj[key]);
+            }
+          }
+        };
+        await processObject(cleanedActivePage.data);
+
+        payload = JSON.stringify(cleanedActivePage);
+        isPartial = true;
+      } else {
+        console.log('[CMS] Preparing full site payload...');
+        const cleaned = cleanState(dataToSave);
+        const compressed = await compressStateImages(cleaned);
+        payload = JSON.stringify(compressed);
+      }
+
+      console.log(`[CMS] Final payload size: ${(payload.length / 1024).toFixed(1)}KB (${isPartial ? 'Partial' : 'Full'})`);
 
       if (payload.length > 4 * 1024 * 1024) {
         console.warn(`[CMS] Payload is still large (${(payload.length / 1024 / 1024).toFixed(2)}MB). Attempting to proceed...`);
@@ -342,7 +369,7 @@ export const CMSProvider = ({ children }) => {
       });
 
       if (response.status === 413) {
-        throw new Error('Total website size is still too large even after compression! Please try using fewer large images.');
+        throw new Error('Total website size is still too large even after compression! This is unexpected with partial updates. Please contact support.');
       }
 
       if (!response.ok) {
@@ -358,7 +385,18 @@ export const CMSProvider = ({ children }) => {
       }
 
       // 3. Update local state with the cleaned and compressed version
-      setState(compressed);
+      if (isPartial) {
+        setState(prev => ({
+          ...prev,
+          pages: {
+            ...prev.pages,
+            [dataToSave.activePageSlug]: JSON.parse(payload) // payload is the stringified page
+          }
+        }));
+      } else {
+        setState(JSON.parse(payload));
+      }
+
       console.log('[CMS] Save successful!');
       return { success: true };
     } catch (error) {

@@ -144,25 +144,6 @@ const AdminDashboard = () => {
                     >
                         User Management
                     </button>
-                    <div className="ml-auto flex items-center">
-                        <button
-                            onClick={handlePublish}
-                            disabled={saving}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm ${saving
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : 'bg-green-600 text-white hover:bg-green-500'
-                                }`}
-                        >
-                            {saving ? (
-                                <>
-                                    <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    Saving & Publishing...
-                                </>
-                            ) : (
-                                <>Save & Publish</>
-                            )}
-                        </button>
-                    </div>
                 </div>
 
                 <div className="p-8 bg-white rounded-b-lg shadow-sm">

@@ -223,17 +223,51 @@ app.get('/api/cms', (req, res) => {
 
 app.post('/api/cms', (req, res) => {
     try {
-        const data = req.body;
+        const incomingData = req.body;
         // Ensure data directory exists
         const dataDir = path.dirname(DATA_FILE);
         if (!fs.existsSync(dataDir)) {
             fs.mkdirSync(dataDir, { recursive: true });
         }
-        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-        console.log('CMS data saved successfully');
-        res.json({ success: true, message: 'CMS data saved successfully' });
+
+        let finalData;
+
+        // Check for partial update (page-specific)
+        if (incomingData.slug && incomingData.data) {
+            console.log(`[CMS] Partial update received for slug: ${incomingData.slug}`);
+            let existingData = { pages: {} };
+            if (fs.existsSync(DATA_FILE)) {
+                try {
+                    existingData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+                } catch (e) {
+                    console.error('[CMS] Failed to parse existing data, starting fresh');
+                }
+            }
+
+            // Merge the new page data into existing pages
+            const pages = existingData.pages || {};
+            pages[incomingData.slug] = {
+                title: incomingData.title || (pages[incomingData.slug]?.title) || incomingData.slug,
+                slug: incomingData.slug,
+                template: incomingData.template || (pages[incomingData.slug]?.template) || 'default',
+                data: incomingData.data
+            };
+
+            finalData = {
+                ...existingData,
+                pages: pages
+            };
+        } else {
+            // Full overwrite (fallback for legacy or multi-page operations)
+            console.log('[CMS] Full data overwrite received');
+            finalData = incomingData;
+        }
+
+        fs.writeFileSync(DATA_FILE, JSON.stringify(finalData, null, 2), 'utf8');
+        console.log('[CMS] CMS data saved successfully');
+        res.json({ success: true, message: 'CMS data saved successfully', size: (JSON.stringify(finalData).length / 1024).toFixed(1) + 'KB' });
     } catch (error) {
-        console.error('Error saving CMS data:', error);
+        console.error('[CMS] Error saving CMS data:', error);
         res.status(500).json({ error: 'Failed to save CMS data' });
     }
 });
