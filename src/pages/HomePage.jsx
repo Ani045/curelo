@@ -5,11 +5,14 @@ import DefaultTemplate from '../templates/DefaultTemplate';
 import MinimalTemplate from '../templates/MinimalTemplate';
 
 const HomePage = () => {
-  const { slug } = useParams();
+  const params = useParams();
+  const slug = params['*'];
   const navigate = useNavigate();
-  const { data, activeTemplate, setActivePage, getAllPages } = useCMS();
+  const { data, activeTemplate, setActivePage, getAllPages, loading } = useCMS();
 
   useEffect(() => {
+    if (loading) return; // Wait for CMS data to load before checking slug existence
+
     const pageSlug = slug || 'home';
     const pages = getAllPages();
     const pageExists = pages.some(p => p.slug === pageSlug);
@@ -20,7 +23,7 @@ const HomePage = () => {
       // Only redirect if there was a slug and it was invalid
       navigate('/', { replace: true });
     }
-  }, [slug, setActivePage, getAllPages, navigate]);
+  }, [slug, setActivePage, getAllPages, navigate, loading]);
 
   if (!data || !data.hero) {
     return (

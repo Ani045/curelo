@@ -5,7 +5,7 @@ import { useCMS } from '../context/CMSContext';
 import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
-    const { getAllPages, createPage, deletePage, saveToServer, saving } = useCMS();
+    const { getAllPages, createPage, deletePage, saveToServer, saving, loading } = useCMS();
     const { logout, user, fetchUsers, addUser, deleteUser } = useAuth();
     const navigate = useNavigate();
 
@@ -47,9 +47,9 @@ const AdminDashboard = () => {
             return;
         }
 
-        const slugRegex = /^[a-z0-9-]+$/;
+        const slugRegex = /^[a-z0-9-/]+$/;
         if (!slugRegex.test(newPage.slug)) {
-            setPageError('Slug must contain only lowercase letters, numbers, and hyphens');
+            setPageError('Slug must contain only lowercase letters, numbers, hyphens, and slashes');
             return;
         }
 
@@ -217,7 +217,11 @@ const AdminDashboard = () => {
                             {/* Pages List */}
                             <div className="md:col-span-2 space-y-4">
                                 <h2 className="text-lg font-bold text-gray-800 mb-4">Your Landing Pages</h2>
-                                {pages.length === 0 ? (
+                                {loading ? (
+                                    <div className="flex justify-center items-center py-12">
+                                        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                                    </div>
+                                ) : pages.length === 0 ? (
                                     <p className="text-gray-500 italic text-center py-8">No pages created yet.</p>
                                 ) : (
                                     pages.map((page) => (

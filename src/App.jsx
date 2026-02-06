@@ -27,14 +27,14 @@ function App() {
                 }
               />
               <Route
-                path="/admin/:slug"
+                path="/admin/*"
                 element={
                   <ProtectedRoute>
                     <AdminPage />
                   </ProtectedRoute>
                 }
               />
-              <Route path="/:slug" element={<HomePage />} />
+              <Route path="/*" element={<HomePage />} />
             </Routes>
           </div>
         </Router>

@@ -68,7 +68,8 @@ const ImageUpload = ({ label, currentImage, onImageChange }) => {
 };
 
 const AdminPage = () => {
-    const { slug } = useParams();
+    const params = useParams();
+    const slug = params['*'];
     const navigate = useNavigate();
     const { data, updateSection, updateSectionAndSave, setActivePage, activePageSlug, getAllPages, activeTemplate, updatePageTemplate, saveToServer, saving, loading } = useCMS();
     const [localData, setLocalData] = useState(data);
@@ -77,6 +78,8 @@ const AdminPage = () => {
 
     // Set active page on mount or slug change
     useEffect(() => {
+        if (loading) return; // Wait for CMS data to load
+
         if (slug) {
             const pages = getAllPages();
             if (pages.some(p => p.slug === slug)) {
@@ -85,7 +88,7 @@ const AdminPage = () => {
                 navigate('/admin');
             }
         }
-    }, [slug, setActivePage, getAllPages, navigate]);
+    }, [slug, setActivePage, getAllPages, navigate, loading]);
 
     // Update local data when the active page in context changes
     useEffect(() => {
