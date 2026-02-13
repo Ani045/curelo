@@ -282,9 +282,9 @@ app.post('/api/login', (req, res) => {
     try {
         let { username, password } = req.body;
 
-        // Trim inputs to avoid common whitespace issues
+        // Normalize username (trim whitespace)
         username = username?.trim();
-        password = password?.trim();
+        // CRITICAL: Do NOT trim password here, as it may have intentional spaces
 
         console.log(`--- Login Attempt ---`);
         console.log(`Username: [${username}] (length: ${username?.length})`);
@@ -304,14 +304,21 @@ app.post('/api/login', (req, res) => {
 
         if (user) {
             console.log(`SUCCESS: Login granted for ${username}`);
-            const { password, ...userData } = user;
+            const { password: _p, ...userData } = user;
             res.json({ success: true, user: userData });
         } else {
-            console.warn(`FAILURE: No match found for user [${username}] with the provided password.`);
-            // Additional check to see if username exists but password failed
-            const usernameExists = users.some(u => u.username === username);
-            if (usernameExists) {
-                console.warn(`DEBUG: Username [${username}] exists, but password did not match.`);
+            console.warn(`FAILURE: No match found for user [${username}]`);
+
+            // Check if username exists but password failed
+            const existingUser = users.find(u => u.username === username);
+            if (existingUser) {
+                console.warn(`DEBUG: Username [${username}] exists.`);
+                console.warn(`DEBUG: Provided password length: ${password?.length}, First: ${password?.[0]}, Last: ${password?.[password.length - 1]}`);
+                console.warn(`DEBUG: Expected password length: ${existingUser.password?.length}, First: ${existingUser.password?.[0]}, Last: ${existingUser.password?.[existingUser.password.length - 1]}`);
+
+                if (password?.trim() === existingUser.password?.trim()) {
+                    console.warn(`DEBUG: Passwords would match if trimmed! This confirms a whitespace mismatch.`);
+                }
             } else {
                 console.warn(`DEBUG: Username [${username}] does not exist in users.json. Available: ${users.map(u => u.username).join(', ')}`);
             }
@@ -348,11 +355,17 @@ app.post('/api/users', (req, res) => {
             users = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
         }
 
-        if (users.find(u => u.username === newUser.username)) {
+        if (users.find(u => u.username === newUser.username?.trim())) {
             return res.status(400).json({ error: 'User already exists' });
         }
 
-        users.push(newUser);
+        // Normalize username on creation
+        const normalizedUser = {
+            ...newUser,
+            username: newUser.username?.trim()
+        };
+
+        users.push(normalizedUser);
         fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
         res.json({ success: true, message: 'User added successfully' });
     } catch (error) {
