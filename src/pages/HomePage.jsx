@@ -8,7 +8,7 @@ const HomePage = () => {
   const params = useParams();
   const slug = params['*'];
   const navigate = useNavigate();
-  const { data, activeTemplate, setActivePage, getAllPages, loading } = useCMS();
+  const { data, activeTemplate, setActivePage, getAllPages, loading, activePageSlug } = useCMS();
 
   useEffect(() => {
     if (loading) return; // Wait for CMS data to load before checking slug existence
@@ -25,7 +25,8 @@ const HomePage = () => {
     }
   }, [slug, setActivePage, getAllPages, navigate, loading]);
 
-  if (!data || !data.hero) {
+  const currentSlug = slug || 'home';
+  if (loading || activePageSlug !== currentSlug || !data || !data.hero) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-xl font-semibold text-gray-400 animate-pulse">Loading Page Data...</div>

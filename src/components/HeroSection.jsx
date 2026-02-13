@@ -105,6 +105,20 @@ const HeroSection = () => {
     }
   }, []);
 
+  const [brokenImages, setBrokenImages] = useState({});
+
+  const handleImageError = (key) => {
+    console.warn(`[HeroSection] Image failed to load: ${key}`);
+    setBrokenImages(prev => ({ ...prev, [key]: true }));
+  };
+
+  const getImageSrc = (imgSrc, key) => {
+    if (brokenImages[key] || !imgSrc) {
+      return 'https://brandingpioneers.co.in/curelo-health/Full-Body-Checkup-Banner.png'; // Use a known good fallback
+    }
+    return imgSrc;
+  };
+
   useEffect(() => {
     const checkScreenSize = () => {
       setIsSmallDevice(window.innerWidth < 400);
@@ -190,24 +204,27 @@ const HeroSection = () => {
                 {/* Small Device Banner (< 400px like iPhone SE) - Full image */}
                 {isSmallDevice && (
                   <img
-                    src={hero.smallBanner}
+                    src={getImageSrc(hero.smallBanner, 'smallBanner')}
                     alt="Full Body Checkup Banner"
                     className="w-full h-auto"
+                    onError={() => handleImageError('smallBanner')}
                   />
                 )}
                 {/* Regular Mobile Banner (400px - 1023px) - Full image */}
                 {!isSmallDevice && (
                   <img
-                    src={hero.mobileBanner}
+                    src={getImageSrc(hero.mobileBanner, 'mobileBanner')}
                     alt="Full Body Checkup Banner"
                     className="w-full h-auto lg:hidden"
+                    onError={() => handleImageError('mobileBanner')}
                   />
                 )}
                 {/* Desktop Banner (1024px+) */}
                 <img
-                  src={hero.desktopBanner}
+                  src={getImageSrc(hero.desktopBanner, 'desktopBanner')}
                   alt="Full Body Checkup Banner"
                   className="w-full h-auto object-cover hidden lg:block"
+                  onError={() => handleImageError('desktopBanner')}
                 />
               </div>
 
@@ -380,7 +397,15 @@ const HeroSection = () => {
                       className="flex flex-col items-center text-center gap-3"
                     >
                       <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center border border-gray-100 p-3">
-                        <img src={point.icon} alt={point.title} className="w-full h-full object-contain" />
+                        <img
+                          src={point.icon}
+                          alt={point.title}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/64?text=Icon';
+                          }}
+                        />
                       </div>
                       <h3 className="text-xs lg:text-sm font-semibold text-gray-800 leading-tight max-w-[140px]">
                         {point.title}

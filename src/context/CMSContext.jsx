@@ -288,9 +288,12 @@ export const CMSProvider = ({ children }) => {
       try {
         const response = await fetch(API_URL);
         const serverData = await response.json();
+        console.log('[CMS] Fetched data from server, pages found:', serverData.pages ? Object.keys(serverData.pages) : 'none');
 
         if (serverData && serverData.pages) {
           setState(cleanState(serverData));
+        } else {
+          console.warn('[CMS] Server returned invalid data structure:', serverData);
         }
       } catch (error) {
         console.error('Failed to fetch CMS data from server:', error);
@@ -415,8 +418,14 @@ export const CMSProvider = ({ children }) => {
   const data = activePage.data || defaultData;
 
   const setActivePage = useCallback((slug) => {
+    console.log(`[CMS] Setting active page to: ${slug}`);
     if (state.pages[slug]) {
-      setState(prev => ({ ...prev, activePageSlug: slug }));
+      setState(prev => {
+        if (prev.activePageSlug === slug) return prev;
+        return { ...prev, activePageSlug: slug };
+      });
+    } else {
+      console.warn(`[CMS] Attempted to set active page to "${slug}", but it doesn't exist in state.`);
     }
   }, [state.pages]);
 
