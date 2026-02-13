@@ -5,7 +5,7 @@ import { useCMS } from '../context/CMSContext';
 import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
-    const { getAllPages, createPage, deletePage, saveToServer, saving, loading } = useCMS();
+    const { getAllPages, createPage, deletePageAndSave, saveToServer, saving, loading } = useCMS();
     const { logout, user, fetchUsers, addUser, deleteUser } = useAuth();
     const navigate = useNavigate();
 
@@ -61,9 +61,14 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleDeletePage = (slug) => {
+    const handleDeletePage = async (slug) => {
         if (window.confirm(`Are you sure you want to delete the page "${slug}"?`)) {
-            deletePage(slug);
+            const result = await deletePageAndSave(slug);
+            if (result.success) {
+                alert('Page deleted successfully');
+            } else {
+                alert('Failed to delete page: ' + result.error);
+            }
         }
     };
 

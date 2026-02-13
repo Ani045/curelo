@@ -475,6 +475,25 @@ export const CMSProvider = ({ children }) => {
     return true;
   }, []);
 
+  const deletePageAndSave = useCallback(async (slug) => {
+    if (slug === 'home') return { success: false, error: 'Cannot delete home page' };
+
+    let latestState;
+    setState(prev => {
+      const newPages = { ...prev.pages };
+      delete newPages[slug];
+      latestState = {
+        ...prev,
+        pages: newPages,
+        activePageSlug: prev.activePageSlug === slug ? 'home' : prev.activePageSlug
+      };
+      return latestState;
+    });
+
+    // For deletion, we MUST do a full save because partial saves only merge/update
+    return await saveToServer(latestState, true);
+  }, [saveToServer]);
+
   const getAllPages = useCallback(() => {
     return Object.values(state.pages).map(p => ({ title: p.title, slug: p.slug, template: p.template }));
   }, [state.pages]);
@@ -594,6 +613,7 @@ export const CMSProvider = ({ children }) => {
       createPage,
       updatePageTemplate,
       deletePage,
+      deletePageAndSave,
       getAllPages,
       updatePackage,
       updateSection,
