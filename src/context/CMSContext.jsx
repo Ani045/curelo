@@ -488,21 +488,20 @@ export const CMSProvider = ({ children }) => {
   const deletePageAndSave = useCallback(async (slug) => {
     if (slug === 'home') return { success: false, error: 'Cannot delete home page' };
 
-    let latestState;
-    setState(prev => {
-      const newPages = { ...prev.pages };
-      delete newPages[slug];
-      latestState = {
-        ...prev,
-        pages: newPages,
-        activePageSlug: prev.activePageSlug === slug ? 'home' : prev.activePageSlug
-      };
-      return latestState;
-    });
+    // Calculate the next state outside to ensure saveToServer gets the correct data
+    const currentPages = { ...state.pages };
+    delete currentPages[slug];
+    const nextState = {
+      ...state,
+      pages: currentPages,
+      activePageSlug: state.activePageSlug === slug ? 'home' : state.activePageSlug
+    };
+
+    setState(nextState);
 
     // For deletion, we MUST do a full save because partial saves only merge/update
-    return await saveToServer(latestState, true);
-  }, [saveToServer]);
+    return await saveToServer(nextState, true);
+  }, [state, saveToServer]);
 
   const getAllPages = useCallback(() => {
     return Object.values(state.pages).map(p => ({ title: p.title, slug: p.slug, template: p.template }));
@@ -528,28 +527,26 @@ export const CMSProvider = ({ children }) => {
   }, []);
 
   const updateSectionAndSave = useCallback(async (section, newData) => {
-    let latestState;
-    setState(prev => {
-      const currentPage = prev.pages[prev.activePageSlug];
-      latestState = {
-        ...prev,
-        pages: {
-          ...prev.pages,
-          [prev.activePageSlug]: {
-            ...currentPage,
-            data: {
-              ...currentPage.data,
-              [section]: { ...currentPage.data[section], ...newData }
-            }
+    const currentPage = state.pages[state.activePageSlug];
+    const nextState = {
+      ...state,
+      pages: {
+        ...state.pages,
+        [state.activePageSlug]: {
+          ...currentPage,
+          data: {
+            ...currentPage.data,
+            [section]: { ...currentPage.data[section], ...newData }
           }
         }
-      };
-      return latestState;
-    });
+      }
+    };
 
-    // Use the latest state for saving
-    return await saveToServer(latestState);
-  }, [saveToServer]);
+    setState(nextState);
+
+    // Use the newly calculated state for saving
+    return await saveToServer(nextState);
+  }, [state, saveToServer]);
 
   const updateUSP = useCallback((index, field, value) => {
     setState(prev => {
