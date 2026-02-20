@@ -1,14 +1,16 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useCMS } from '../context/CMSContext';
 
-const { FiActivity, FiDroplet, FiHeart, FiFilter, FiShield, FiThermometer, FiFileText, FiZap, FiStar, FiUsers, FiCheck } = FiIcons;
+const { FiActivity, FiDroplet, FiHeart, FiFilter, FiShield, FiThermometer, FiFileText, FiZap, FiStar, FiUsers, FiCheck, FiX } = FiIcons;
 
 const MostBookedPackages = ({ onPackageSelect }) => {
   const { data } = useCMS();
   const { mostBookedPackages } = data;
+  const [activeTooltip, setActiveTooltip] = useState(null);
+  const tooltipRef = useRef(null);
 
   // Icons map to reconstruct the icons
   const iconMap = {
@@ -19,6 +21,17 @@ const MostBookedPackages = ({ onPackageSelect }) => {
     Heart: FiHeart,
     Default: FiCheck
   };
+
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(event.target)) {
+        setActiveTooltip(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Helper to merge CMS data with static icon/tag logic (since CMS doesn't store Icon components)
   const packagesWithMetadata = mostBookedPackages.packages.map((pkg) => {
@@ -67,7 +80,7 @@ const MostBookedPackages = ({ onPackageSelect }) => {
               </h3>
 
               {/* Tags - Compact */}
-              <div className="flex flex-wrap gap-1.5 mb-4">
+              <div className="flex flex-wrap gap-1.5 mb-4 relative">
                 {pkg.tags.slice(0, 4).map((tag, idx) => (
                   <span key={idx} className="inline-flex items-center gap-1 bg-[#143a69]/5 text-[#143a69] text-[10px] font-medium px-2 py-1 rounded-md border border-[#143a69]/10">
                     <SafeIcon icon={tag.icon} className="text-[10px]" />
@@ -75,9 +88,44 @@ const MostBookedPackages = ({ onPackageSelect }) => {
                   </span>
                 ))}
                 {pkg.extraTags && pkg.extraTags.length > 0 && (
-                  <span className="inline-flex items-center gap-1 bg-[#7bdb81]/10 text-[#143a69] text-[10px] font-medium px-2 py-1 rounded-md border border-[#7bdb81]/20">
-                    +{pkg.extraTags.length} More
-                  </span>
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTooltip(activeTooltip === index ? null : index);
+                      }}
+                      className="inline-flex items-center gap-1 bg-[#7bdb81]/10 text-[#143a69] text-[10px] font-bold px-2 py-1 rounded-md border border-[#7bdb81]/20 hover:bg-[#7bdb81]/20 transition-colors cursor-pointer"
+                    >
+                      +{pkg.extraTags.length} More
+                    </button>
+
+                    <AnimatePresence>
+                      {activeTooltip === index && (
+                        <motion.div
+                          ref={tooltipRef}
+                          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                          className="absolute bottom-full left-0 mb-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 p-3 z-20"
+                        >
+                          <div className="flex justify-between items-center mb-2 border-b border-gray-100 pb-1">
+                            <span className="text-[10px] font-bold text-[#143a69]">Extra Parameters</span>
+                            <button onClick={() => setActiveTooltip(null)} className="text-gray-400 hover:text-gray-600">
+                              <SafeIcon icon={FiX} size={12} />
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {pkg.extraTags.map((tag, tIdx) => (
+                              <span key={tIdx} className="bg-gray-50 text-[#143a69] text-[9px] font-medium px-1.5 py-0.5 rounded border border-gray-200">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="absolute top-full left-4 w-3 h-3 bg-white border-r border-b border-gray-200 transform rotate-45 -mt-1.5"></div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
 

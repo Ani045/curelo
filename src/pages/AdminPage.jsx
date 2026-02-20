@@ -71,10 +71,12 @@ const AdminPage = () => {
     const params = useParams();
     const slug = params['*'];
     const navigate = useNavigate();
-    const { data, updateSection, updateSectionAndSave, setActivePage, activePageSlug, getAllPages, activeTemplate, updatePageTemplate, saveToServer, saving, loading } = useCMS();
-    const [localData, setLocalData] = useState(data);
+    const { data, updateSection, updateSectionAndSave, setActivePage, activePageSlug, getAllPages, activeTemplate, updatePageTemplate, saveToServer, loading } = useCMS();
+    const [localData, setLocalData] = useState(null);
     const [activeTab, setActiveTab] = useState('hero');
     const [isDirty, setIsDirty] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [tagInputs, setTagInputs] = useState({}); // Stores raw string values for comma-separated inputs
 
     // Set active page on mount or slug change
     useEffect(() => {
@@ -171,6 +173,21 @@ const AdminPage = () => {
         });
     };
 
+    const handleTagInputChange = (index, field, rawValue) => {
+        // Update local input state immediately for smooth typing
+        setTagInputs(prev => ({ ...prev, [`${index}_${field}`]: rawValue }));
+
+        // Parse and update the actual package data
+        const tags = rawValue.split(',').map(t => t.trim()).filter(t => t !== '');
+        updateLocalPackage(index, field, tags);
+    };
+
+    const getTagInputValue = (index, field, currentTags) => {
+        const key = `${index}_${field}`;
+        if (tagInputs[key] !== undefined) return tagInputs[key];
+        return (currentTags || []).join(', ');
+    };
+
     const handleTemplateChange = (e) => {
         updatePageTemplate(slug || 'home', e.target.value);
     };
@@ -181,8 +198,10 @@ const AdminPage = () => {
         if (activeTab === 'formSettings') sectionKey = 'formData';
 
         const result = await updateSectionAndSave(sectionKey, localData[sectionKey]);
+        setSaving(false);
 
         if (result.success) {
+            setTagInputs({}); // Clear tag inputs to resync with fresh data
             alert('Changes saved and published to server successfully!');
         } else {
             alert('Failed to save and publish: ' + result.error);
@@ -549,11 +568,8 @@ const AdminPage = () => {
                                                     <label className="block text-xs font-medium text-gray-500 mb-1">Main Parameters (Comma separated)</label>
                                                     <input
                                                         type="text"
-                                                        value={(pkg.tags || []).join(', ')}
-                                                        onChange={(e) => {
-                                                            const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t !== '');
-                                                            updateLocalPackage(index, 'tags', tags);
-                                                        }}
+                                                        value={getTagInputValue(index, 'tags', pkg.tags)}
+                                                        onChange={(e) => handleTagInputChange(index, 'tags', e.target.value)}
                                                         placeholder="HbA1c, Lipid, Liver, Kidney"
                                                         className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
@@ -562,11 +578,8 @@ const AdminPage = () => {
                                                     <label className="block text-xs font-medium text-gray-500 mb-1">Extra Parameters (Comma separated, shown in +X More)</label>
                                                     <input
                                                         type="text"
-                                                        value={(pkg.extraTags || []).join(', ')}
-                                                        onChange={(e) => {
-                                                            const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t !== '');
-                                                            updateLocalPackage(index, 'extraTags', tags);
-                                                        }}
+                                                        value={getTagInputValue(index, 'extraTags', pkg.extraTags)}
+                                                        onChange={(e) => handleTagInputChange(index, 'extraTags', e.target.value)}
                                                         placeholder="Infection, Thyroid"
                                                         className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
