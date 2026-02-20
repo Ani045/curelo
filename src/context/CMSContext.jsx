@@ -49,6 +49,7 @@ const defaultData = {
         originalPrice: "₹5947",
         discount: "78% OFF",
         recommended: false,
+        tags: ["HbA1c", "Lipid", "Liver", "Kidney"],
         extraTags: ["Infection", "Thyroid"]
       },
       {
@@ -59,6 +60,7 @@ const defaultData = {
         originalPrice: "₹8566",
         discount: "78% OFF",
         recommended: true,
+        tags: ["Heart", "HbA1c", "Lipid", "Liver"],
         extraTags: ["Kidney", "Infection"]
       },
       {
@@ -69,6 +71,7 @@ const defaultData = {
         originalPrice: "₹9955",
         discount: "74% OFF",
         recommended: false,
+        tags: ["Heart", "HbA1c", "Lipid", "Liver"],
         extraTags: ["Kidney", "Infection"]
       }
     ]

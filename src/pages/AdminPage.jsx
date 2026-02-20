@@ -506,7 +506,7 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={pkg.title}
                                                         onChange={(e) => updateLocalPackage(index, 'title', e.target.value)}
-                                                        className="w-full p-2 border rounded text-sm"
+                                                        className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
                                                 </div>
                                                 <div>
@@ -515,7 +515,7 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={pkg.originalPrice}
                                                         onChange={(e) => updateLocalPackage(index, 'originalPrice', e.target.value)}
-                                                        className="w-full p-2 border rounded text-sm"
+                                                        className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
                                                 </div>
                                                 <div>
@@ -524,7 +524,7 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={pkg.price}
                                                         onChange={(e) => updateLocalPackage(index, 'price', e.target.value)}
-                                                        className="w-full p-2 border rounded text-sm"
+                                                        className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
                                                 </div>
                                                 <div>
@@ -533,7 +533,7 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={pkg.includes}
                                                         onChange={(e) => updateLocalPackage(index, 'includes', e.target.value)}
-                                                        className="w-full p-2 border rounded text-sm"
+                                                        className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
                                                 </div>
                                                 <div>
@@ -542,7 +542,33 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={pkg.reportTime}
                                                         onChange={(e) => updateLocalPackage(index, 'reportTime', e.target.value)}
-                                                        className="w-full p-2 border rounded text-sm"
+                                                        className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Main Parameters (Comma separated)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={(pkg.tags || []).join(', ')}
+                                                        onChange={(e) => {
+                                                            const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t !== '');
+                                                            updateLocalPackage(index, 'tags', tags);
+                                                        }}
+                                                        placeholder="HbA1c, Lipid, Liver, Kidney"
+                                                        className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Extra Parameters (Comma separated, shown in +X More)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={(pkg.extraTags || []).join(', ')}
+                                                        onChange={(e) => {
+                                                            const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t !== '');
+                                                            updateLocalPackage(index, 'extraTags', tags);
+                                                        }}
+                                                        placeholder="Infection, Thyroid"
+                                                        className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                                                     />
                                                 </div>
                                             </div>

@@ -21,31 +21,13 @@ const MostBookedPackages = ({ onPackageSelect }) => {
   };
 
   // Helper to merge CMS data with static icon/tag logic (since CMS doesn't store Icon components)
-  const packagesWithMetadata = mostBookedPackages.packages.map((pkg, i) => {
-    // Reconstruct tags based on some logic or keep them static/hardcoded for now as per plan
-    // For this demo, we'll keep the tags static from the original code but apply title/price from CMS
-    // A more advanced CMS would allow editing tags too, but that requires a complex UI.
-    const originalTags = [
-      [
-        { name: "HbA1c", icon: FiActivity },
-        { name: "Lipid", icon: FiDroplet },
-        { name: "Liver", icon: FiFilter },
-        { name: "Kidney", icon: FiActivity }
-      ],
-      [
-        { name: "Heart", icon: FiHeart },
-        { name: "HbA1c", icon: FiActivity },
-        { name: "Lipid", icon: FiDroplet },
-        { name: "Liver", icon: FiFilter }
-      ],
-      [
-        { name: "Heart", icon: FiHeart },
-        { name: "HbA1c", icon: FiActivity },
-        { name: "Lipid", icon: FiDroplet },
-        { name: "Liver", icon: FiFilter }
-      ]
-    ];
-    return { ...pkg, tags: originalTags[i] || [] };
+  const packagesWithMetadata = mostBookedPackages.packages.map((pkg) => {
+    // If tags exist in CMS data, use them, otherwise use icons based on names
+    const tagsWithIcons = (pkg.tags || []).map(tagName => ({
+      name: tagName,
+      icon: iconMap[tagName] || iconMap.Default
+    }));
+    return { ...pkg, tags: tagsWithIcons };
   });
 
   return (
