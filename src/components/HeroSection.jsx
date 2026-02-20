@@ -6,7 +6,8 @@ import { useCMS } from '../context/CMSContext';
 const { FiUser, FiPhone, FiMapPin, FiCheck, FiHome, FiFileText, FiUsers, FiChevronDown } = FiIcons;
 
 // Available cities for the dropdown
-const CITIES_LIST = [
+// Fallback city list if CMS data is missing
+const DEFAULT_CITIES = [
   "Delhi",
   "Noida",
   "Gurgaon",
@@ -235,7 +236,7 @@ const HeroSection = () => {
 
                   {/* Form Header */}
                   <div className="pt-5 pb-2 px-5">
-                    <h2 className="text-lg font-bold text-slate-800">Book Your Test Today</h2>
+                    <h2 className="text-lg font-bold text-slate-800">{hero.formTitle || "Book Your Test Today"}</h2>
                   </div>
 
                   <div className="px-5 pb-5 space-y-3 relative">
@@ -315,7 +316,7 @@ const HeroSection = () => {
                           style={{ color: formData.city ? '#1f2937' : '#9ca3af' }}
                         >
                           <option value="" disabled>Select City</option>
-                          {CITIES_LIST.map((city, index) => (
+                          {(data.formData?.cities || DEFAULT_CITIES).map((city, index) => (
                             <option key={index} value={city} style={{ color: '#1f2937' }}>{city}</option>
                           ))}
                         </select>
@@ -366,7 +367,7 @@ const HeroSection = () => {
               {/* MOBILE: Why Choose Section */}
               <div className="text-center lg:hidden">
                 <h2 className="text-xl font-bold text-gray-800 mb-6 font-sans">
-                  Why Choose Curelo Health?
+                  {hero.uspsTitle || "Why Choose Curelo Health?"}
                 </h2>
                 <div className="grid grid-cols-2 gap-4 px-2">
                   {hero.usps.map((point, index) => (
@@ -388,7 +389,7 @@ const HeroSection = () => {
               {/* USP Section - Desktop Only */}
               <div className="text-center hidden lg:block">
                 <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-6 font-sans">
-                  Why Choose Curelo Health?
+                  {hero.uspsTitle || "Why Choose Curelo Health?"}
                 </h2>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2">
                   {hero.usps.map((point, index) => (
@@ -422,7 +423,7 @@ const HeroSection = () => {
 
                 {/* Form Header */}
                 <div className="pt-6 pb-2 px-6">
-                  <h2 className="text-xl font-bold text-slate-800">Book Your Test Today</h2>
+                  <h2 className="text-xl font-bold text-slate-800">{hero.formTitle || "Book Your Test Today"}</h2>
                 </div>
 
                 <div className="px-6 pb-6 space-y-4 relative">
@@ -502,7 +503,7 @@ const HeroSection = () => {
                         style={{ color: formData.city ? '#1f2937' : '#9ca3af' }}
                       >
                         <option value="" disabled>Select City</option>
-                        {CITIES_LIST.map((city, index) => (
+                        {(data.formData?.cities || DEFAULT_CITIES).map((city, index) => (
                           <option key={index} value={city} style={{ color: '#1f2937' }}>{city}</option>
                         ))}
                       </select>

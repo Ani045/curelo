@@ -15,12 +15,17 @@ const defaultData = {
     offerTitle: "Get Report Consultation & Diet Plan",
     offerSubtitle: "with your Booking!",
     offerPriceOriginal: "₹799",
+    formTitle: "Book Your Test Today",
+    uspsTitle: "Why Choose Curelo Health?",
     usps: [
       { icon: 'https://brandingpioneers.co.in/curelo-health/icon1.png', title: "100% Honest Pricing" },
       { icon: 'https://brandingpioneers.co.in/curelo-health/icon2.png', title: "India's Widest Home Collection Network" },
       { icon: 'https://brandingpioneers.co.in/curelo-health/icon3.png', title: "100% Report Accuracy Guaranteed" },
       { icon: 'https://brandingpioneers.co.in/curelo-health/icon4.png', title: "70+ Lakhs Patients Served" }
     ]
+  },
+  formData: {
+    cities: ["Delhi", "Noida", "Gurgaon", "Ghaziabad", "Faridabad", "Vadodara", "Ahmedabad"]
   },
   testDetails: {
     description: "Your body gives signals before a problem becomes serious—are you paying attention? This package helps you catch early signs of health issues so you can take action on time. It includes 68 important tests to check your liver, kidney, blood health, and more—giving you a complete health update with a single test. Curelo Health is among the most trusted pathology labs near you, offering affordable health packages and accurate diagnostics. Whether you're looking for laboratories near me or a nearby pathology center, our experts ensure quick home sample collection and accurate digital report delivery.",
@@ -81,6 +86,7 @@ const defaultData = {
   faqs: {
     title: "Frequently Asked Questions",
     subtitle: "Find answers to common questions about our services",
+    image: "https://brandingpioneers.co.in/curelo-health/Shreyas.png",
     items: [
       {
         question: "How does the home sample collection work?",
@@ -269,7 +275,8 @@ export const CMSProvider = ({ children }) => {
                 mostBookedPackages: { ...defaultData.mostBookedPackages, ...parsed.mostBookedPackages },
                 whyChooseUs: { ...defaultData.whyChooseUs, ...parsed.whyChooseUs || {} },
                 faqs: { ...defaultData.faqs, ...parsed.faqs || {} },
-                contact: { ...defaultData.contact, ...parsed.contact || {} }
+                contact: { ...defaultData.contact, ...parsed.contact || {} },
+                formData: { ...defaultData.formData, ...parsed.formData || {} }
               }
             }
           },

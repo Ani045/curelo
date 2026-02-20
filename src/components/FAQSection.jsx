@@ -110,8 +110,8 @@ const FAQSection = () => {
 
               {/* Image with object-position for top focus */}
               <img
-                src="https://brandingpioneers.co.in/curelo-health/Shreyas.png"
-                alt="Shreyas Iyer"
+                src={faqs.image || "https://brandingpioneers.co.in/curelo-health/Shreyas.png"}
+                alt="Support"
                 className="relative z-10 w-full h-auto object-cover max-h-[500px] lg:max-h-[600px] object-top"
               />
 

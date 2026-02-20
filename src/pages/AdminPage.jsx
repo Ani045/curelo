@@ -102,6 +102,7 @@ const AdminPage = () => {
 
         let sectionKey = activeTab;
         if (activeTab === 'packages') sectionKey = 'mostBookedPackages';
+        if (activeTab === 'formSettings') sectionKey = 'formData';
 
         const activeSectionData = data[sectionKey];
         const localSectionData = localData[sectionKey];
@@ -177,6 +178,7 @@ const AdminPage = () => {
     const handleSaveAndPublish = async () => {
         let sectionKey = activeTab;
         if (activeTab === 'packages') sectionKey = 'mostBookedPackages';
+        if (activeTab === 'formSettings') sectionKey = 'formData';
 
         const result = await updateSectionAndSave(sectionKey, localData[sectionKey]);
 
@@ -286,6 +288,12 @@ const AdminPage = () => {
                     >
                         Contact Info
                     </button>
+                    <button
+                        className={`px-6 py-3 font-medium whitespace-nowrap ${activeTab === 'formSettings' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        onClick={() => setActiveTab('formSettings')}
+                    >
+                        Form Settings
+                    </button>
                 </div>
 
                 <div className="p-6 relative">
@@ -346,6 +354,59 @@ const AdminPage = () => {
                                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Form Title</label>
+                                        <input
+                                            type="text"
+                                            name="formTitle"
+                                            value={localData.hero.formTitle || ''}
+                                            onChange={handleHeroChange}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">USPs Section Title</label>
+                                        <input
+                                            type="text"
+                                            name="uspsTitle"
+                                            value={localData.hero.uspsTitle || ''}
+                                            onChange={handleHeroChange}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">USP Points (Icons & Text)</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {(localData.hero.usps || []).map((usp, index) => (
+                                        <div key={index} className="bg-gray-50 p-4 rounded border">
+                                            <h4 className="font-bold text-gray-700 mb-3">USP {index + 1}</h4>
+                                            <ImageUpload
+                                                label="Icon"
+                                                currentImage={usp.icon}
+                                                onImageChange={(base64) => {
+                                                    const newUsps = [...localData.hero.usps];
+                                                    newUsps[index].icon = base64;
+                                                    updateLocalSection('hero', { usps: newUsps });
+                                                }}
+                                            />
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1">Title</label>
+                                                <input
+                                                    type="text"
+                                                    value={usp.title}
+                                                    onChange={(e) => {
+                                                        const newUsps = [...localData.hero.usps];
+                                                        newUsps[index].title = e.target.value;
+                                                        updateLocalSection('hero', { usps: newUsps });
+                                                    }}
+                                                    className="w-full p-2 border rounded text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -595,6 +656,13 @@ const AdminPage = () => {
                                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                         />
                                     </div>
+                                    <div className="md:col-span-2">
+                                        <ImageUpload
+                                            label="FAQ Section Image"
+                                            currentImage={localData.faqs.image}
+                                            onImageChange={(base64) => updateLocalSection('faqs', { image: base64 })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -695,6 +763,29 @@ const AdminPage = () => {
                                             className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                         />
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'formSettings' && (
+                        <div className="space-y-8">
+                            {renderSaveButton()}
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Form Data</h3>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cities (One per line)</label>
+                                    <textarea
+                                        rows="10"
+                                        value={(localData.formData?.cities || []).join('\n')}
+                                        onChange={(e) => {
+                                            const cities = e.target.value.split('\n').map(c => c.trim()).filter(c => c !== '');
+                                            updateLocalSection('formData', { cities });
+                                        }}
+                                        className="w-full p-3 border rounded font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="Delhi&#10;Noida&#10;Gurgaon..."
+                                    />
+                                    <p className="text-xs text-gray-500 mt-2 italic">Add one city name per line. Empty lines will be removed.</p>
                                 </div>
                             </div>
                         </div>
