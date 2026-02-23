@@ -77,6 +77,7 @@ const AdminPage = () => {
     const [isDirty, setIsDirty] = useState(false);
     const [saving, setSaving] = useState(false);
     const [tagInputs, setTagInputs] = useState({}); // Stores raw string values for comma-separated inputs
+    const [cityText, setCityText] = useState(''); // Stores raw string for cities textarea
 
     // Set active page on mount or slug change
     useEffect(() => {
@@ -95,6 +96,9 @@ const AdminPage = () => {
     // Update local data when the active page in context changes
     useEffect(() => {
         setLocalData(data);
+        if (data?.formData?.cities) {
+            setCityText(data.formData.cities.join('\n'));
+        }
     }, [data, activePageSlug]);
 
     // Sync localData if data changes externally (or on first load if async, though here it's synchronous)
@@ -202,6 +206,7 @@ const AdminPage = () => {
 
         if (result.success) {
             setTagInputs({}); // Clear tag inputs to resync with fresh data
+            setCityText(localData[sectionKey]?.cities?.join('\n') || ''); // Sync city text
             alert('Changes saved and published to server successfully!');
         } else {
             alert('Failed to save and publish: ' + result.error);
@@ -406,8 +411,9 @@ const AdminPage = () => {
                                                 label="Icon"
                                                 currentImage={usp.icon}
                                                 onImageChange={(base64) => {
-                                                    const newUsps = [...localData.hero.usps];
-                                                    newUsps[index].icon = base64;
+                                                    const newUsps = (localData.hero.usps || []).map((usp, i) =>
+                                                        i === index ? { ...usp, icon: base64 } : usp
+                                                    );
                                                     updateLocalSection('hero', { usps: newUsps });
                                                 }}
                                             />
@@ -417,8 +423,9 @@ const AdminPage = () => {
                                                     type="text"
                                                     value={usp.title}
                                                     onChange={(e) => {
-                                                        const newUsps = [...localData.hero.usps];
-                                                        newUsps[index].title = e.target.value;
+                                                        const newUsps = (localData.hero.usps || []).map((usp, i) =>
+                                                            i === index ? { ...usp, title: e.target.value } : usp
+                                                        );
                                                         updateLocalSection('hero', { usps: newUsps });
                                                     }}
                                                     className="w-full p-2 border rounded text-sm"
@@ -816,9 +823,12 @@ const AdminPage = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Cities (One per line)</label>
                                     <textarea
                                         rows="10"
-                                        value={(localData.formData?.cities || []).join('\n')}
+                                        value={cityText}
                                         onChange={(e) => {
-                                            const cities = e.target.value.split('\n').map(c => c.trim()).filter(c => c !== '');
+                                            const newValue = e.target.value;
+                                            setCityText(newValue);
+                                            // Parse and update the actual data
+                                            const cities = newValue.split('\n').map(c => c.trim()).filter(c => c !== '');
                                             updateLocalSection('formData', { cities });
                                         }}
                                         className="w-full p-3 border rounded font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
