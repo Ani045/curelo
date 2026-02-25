@@ -115,7 +115,7 @@ const HeroSection = () => {
 
   const getImageSrc = (imgSrc, key) => {
     if (brokenImages[key] || !imgSrc) {
-      return 'https://brandingpioneers.co.in/curelo-health/Full-Body-Checkup-Banner.png'; // Use a known good fallback
+      return 'https://brandingpioneers.co.in/curelo-health/hero.png'; // Use a known good fallback
     }
     return imgSrc;
   };
