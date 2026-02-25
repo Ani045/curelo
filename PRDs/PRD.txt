@@ -1,0 +1,228 @@
+PRD - LSQ API & Payload Enhancement - Additional Attribution Parameters
+1. Objective
+Enhance the existing LeadSquared (LSQ) integration to capture comprehensive marketing attribution data by:
+	•	Migrating from Create/Update API to Capture API endpoint
+	•	Adding new custom attributes for improved lead source tracking
+	•	Implementing intelligent source classification based on landing page slug patterns
+	•	Maintaining backward compatibility with existing payload structure
+2. Overview
+2.1 Current State
+We have successfully integrated the LSQ Create/Update API to pass Google and Meta leads with basic attribution parameters. The current implementation captures fundamental lead information but lacks detailed campaign tracking and source attribution capabilities.
+2.2 Proposed Changes
+This enhancement involves:
+	•	API Endpoint Migration: Transition from Create/Update API to Capture API while preserving all existing payload attributes
+	•	Enhanced Attribution: Add  new custom attributes to capture granular marketing campaign data including UTM parameters, ad identifiers, and user metadata
+	•	Intelligent Source Classification: Implement automated source tagging based on landing page URL slug patterns
+	•	Universal Latest Source Tracking: Extend latest_source attribute to all lead types including web_organic and app_organic.
+Supportive Documentation - LSQ API<>Payload
+3. Endpoint Migration
+New Endpoint:
+https://api-in21.leadsquared.com/v2/LeadManagement.svc/Lead.Capture?accessKey=u$r93fb2f084e33e51645ac06f42b03e486&secretKey=f8b5a203607c8fc8c2a16107afe18cf28ab5ab04
+4. Payload Specification
+4.1 Existing Payload Structure
+No changes to existing attributes - All previously integrated fields will continue to be passed as-is.
+4.2 New Attributes (Add-On Payload)
+The following attributes will be added to the existing payload:
+[
+  {
+    "Attribute": "mx_Slug",
+    "Value": "<slug value extracted from landing page URL>"
+  },
+  {
+    "Attribute": "mx_utm_keyword",
+    "Value": "<URL-decoded keyword for google-lp source only, removed %20>"
+  },
+  {
+    "Attribute": "mx_Source_Referral_URL",
+    "Value": "<complete landing page URL with all parameters>"
+  },
+  {
+    "Attribute": "mx_Latest_Source",
+    "Value": "<classified source value>"
+  },
+  {
+    "Attribute": "mx_IP_Address",
+    "Value": "<user's device IP address>"
+  },
+  {
+    "Attribute": "SearchBy",
+    "Value": "Phone"
+  },
+  {
+    "Attribute": "mx_utm_medium",
+    "Value": "<utm_medium parameter value>"
+  },
+  {
+    "Attribute": "mx_Ad_Id",
+    "Value": "<ad_id for google-lp source only>"
+  },
+  {
+    "Attribute": "mx_Adset_Id",
+    "Value": "<adgroup_id for google-lp | adset_id for meta-lp>"
+  },
+  {
+    "Attribute": "mx_utm_keyword_id",
+    "Value": "<numeric keyword ID with 'kwd-' prefix removed, google-lp only>"
+  },
+  {
+    "Attribute": "mx_google_location_id",
+    "Value": "<location ID for google-lp source only>"
+  }
+]
+4.3 Updated Payload
+[
+{
+"Attribute": "EmailAddress",
+"Value": "<email address of patient if any>"
+},
+{
+"Attribute": "FirstName",
+"Value": "<first name>"
+},
+{
+"Attribute": "LastName",
+"Value": "<last name>"
+},
+{
+"Attribute": "Phone",          //MANDATORY                      
+"Value": "<phone number of the patient>"
+},
+{
+"Attribute": "mx_Patient_City",
+"Value": "<patient’s city>"
+},
+{
+"Attribute": "Source",
+"Value": "Google_lp"
+},
+{
+"Attribute": "mx_GCLid",
+"Value": "<GCLid>"
+},
+{
+"Attribute": "mx_Slug",
+"Value": "<slug value>"
+},
+{
+"Attribute": "mx_utm_keyword",
+"Value": "<keyword name for google-lp source only>"
+},
+{
+"Attribute": "mx_Source_Referral_URL",
+"Value": "<landing page url>"
+},
+{
+"Attribute": "mx_Latest_Source",
+"Value": "<latest source value>"
+},
+{
+"Attribute": "mx_IP_Address",
+"Value": "<IP address>"
+},
+{
+"Attribute": "SearchBy",
+"Value": "Phone"
+},
+{
+"Attribute": "mx_utm_medium”,
+"Value": "utm_medium value"
+},
+{
+"Attribute": "mx_utm_source",
+"Value": "<source name>"
+},
+{
+"Attribute": "mx_Ad_Id",
+"Value": "ad id for google-lp source only"
+},
+{
+"Attribute": "mx_Adset_Id”,
+"Value": "<adgroup id for google-lp source> & <adset id for meta-lp source>"
+},
+{
+"Attribute": "mx_Source_Campaign_ID",
+"Value": "<campaign id if any>"
+},
+{
+"Attribute": "mx_utm_keyword_id”,
+"Value": "keyword id for google-lp source only"
+},
+{
+"Attribute": "mx_google_location_id”,
+"Value": "location for google-lp source only"
+}
+]
+5. Attribute Mapping & Data Transformation Rules
+5.1 Reference URL Example
+https://curelohealth.com/lead/google-lp/thyroid?utm_source=google&utm_medium=cpc&campaign_id=23271918620&adgroup_id=189528798675&ad_id=784414749322&Keyword_Id=kwd-256638473&Network=g&Device=c&Matchtype=p&Location=1007765&Keyword=thyroid%20test&Placement=&Ad_Position=&gcl_Id=Cj0KCQiAyvHLBhDlARIsAHxl6xp_33R_aU6ZCK02CYgGipCcrcmzm_brhR_O_lF8tZNKjc7CTn4Ct7IaAkdCEALw_wcB&awsearchcpc=1&gad_source=1&gad_campaignid=23271918620&gbraid=0AAAAAqZMWHJpUPfJ5b51ap8SPSIR3LcmQ&gclid=Cj0KCQiAyvHLBhDlARIsAHxl6xp_33R_aU6ZCK02CYgGipCcrcmzm_brhR_O_lF8tZNKjc7CTn4Ct7IaAkdCEALw_wcB
+
+5.2 Detailed Attribute Mapping
+Attribute
+Source
+Example Value
+Transformation Rules
+mx_Slug
+URL path after /lead/
+google-lp/thyroid
+Extract path segments between /lead/ and query parameters
+mx_utm_keyword
+Keyword URL parameter
+thyroid test
+URL decode (remove %20 and other encoded characters) - Google-LP only
+mx_Source_Referral_URL
+Complete URL
+Full URL as shown above
+Pass complete URL with all parameters
+mx_Latest_Source
+URL slug pattern classification
+google_lp
+Apply source classification logic
+mx_IP_Address
+User's device IP
+192.168.1.1
+Capture actual client IP address
+SearchBy
+Static value
+Phone
+Always set to "Phone" (text literal)
+mx_utm_medium
+utm_medium URL parameter
+cpc
+Direct extraction from URL parameter
+mx_Ad_Id
+ad_id URL parameter
+784414749322
+Direct extraction - Google-LP only
+mx_Adset_Id
+adgroup_id (Google) or adset_id (Meta)
+189528798675
+Extract adgroup_id for Google-LP, adset_id for Meta-LP
+mx_utm_keyword_id
+Keyword_Id URL parameter
+256638473
+Remove "kwd-" prefix, store only numeric portion - Google-LP only
+mx_google_location_id
+Location URL parameter
+1007765
+Direct extraction - Google-LP only
+
+5.3 Source Classification Logic (mx_Latest_Source)
+Implementation Notes:
+	•	Slug pattern matching should be case-insensitive
+	•	Both google-lp and cfbc slugs map to google_lp source
+	•	The mx_Latest_Source attribute will be captured for ALL lead types including organic traffic
+6. Out of scope
+	•	No change to existing lead capture flows in landing pages (all current forms, journeys, and triggers remain as-is in Curelo systems).
+	•	No change to existing databases or internal storage of leads; Curelo will continue to store all lead data exactly as today.
+	•	No UI/UX changes on website, landing pages, or app (no new fields, labels, layouts, or screens for this scope).
+	•	No change to current validation rules or mandatory fields on UI; LSQ integration must work with the data already being collected.
+	•	No changes to existing reporting/BI dashboards inside Curelo; any LSQ-based reports will be handled separately by the business/CRM team.
+	•	No migration or backfill of historic leads into LSQ; scope is only for leads/events after this integration goes live.
+7. Success Metrics
+	•	100% of leads include new attribution parameters
+	•	Zero data loss during API migration
+	•	Successful phone-based deduplication rate maintained
+	•	Accurate source classification for all traffic types
+	•	Complete marketing attribution data available for analysis
+
+

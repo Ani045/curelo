@@ -25,21 +25,27 @@ export default async function handler(req, res) {
       service,
       source,
       pageType,
+      // Enhanced attribution fields from frontend
+      slug,
+      referralUrl,
       utmSource,
+      utmMedium,
       utmTerm,
+      utmKeyword,
+      utmKeywordId,
       gclid,
-      adName,
-      adsetName,
-      campaign
+      adId,
+      adgroupId,
+      adsetId,
+      campaignId,
+      locationId
     } = req.body;
 
     // Validate required fields
     const errors = [];
-
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       errors.push('Name is required');
     }
-
     if (!phone || typeof phone !== 'string') {
       errors.push('Phone number is required');
     } else {
@@ -48,133 +54,106 @@ export default async function handler(req, res) {
         errors.push('Phone number must be exactly 10 digits');
       }
     }
-
     if (!city || typeof city !== 'string' || city.trim().length === 0) {
       errors.push('City is required');
     }
 
     if (errors.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        details: errors
-      });
+      return res.status(400).json({ success: false, error: 'Validation failed', details: errors });
     }
+
+    // Capture IP Address
+    const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
 
     // Split name into first and last name
     const nameParts = name.trim().split(' ');
     const firstName = nameParts[0] || name;
     const lastName = nameParts.slice(1).join(' ') || '';
 
-    // Map page type to campaign value
-    const getCampaignFromPageType = (type) => {
-      const campaignMapping = {
-        'comprehensive': 'Comprehensive_Full_Body_93P',
-        'executive': 'Executive_Male_100P',
-        'essential': 'Essential_Body_83P'
-      };
-      return campaignMapping[type] || 'Google_LP_General';
+    // Source Classification Logic (mx_Latest_Source)
+    const getLatestSource = (slugStr) => {
+      if (!slugStr) return 'web_organic';
+      const s = slugStr.toLowerCase();
+      if (s.includes('google-lp') || s.includes('cfbc')) return 'google_lp';
+      if (s.includes('meta-lp') || s.includes('facebook')) return 'meta_lp';
+      return 'web_organic';
     };
 
-    const sourceCampaign = campaign || getCampaignFromPageType(pageType);
+    const latestSource = getLatestSource(slug);
+    const isGoogleLp = latestSource === 'google_lp';
+
+    // Data Transformation Rules
+    const decodedKeyword = utmKeyword ? decodeURIComponent(utmKeyword).replace(/\+/g, ' ') : '';
+    const cleanKeywordId = utmKeywordId ? utmKeywordId.replace('kwd-', '') : '';
 
     // Build LeadSquared payload
     const payload = [
-      {
-        "Attribute": "FirstName",
-        "Value": firstName
-      },
-      {
-        "Attribute": "LastName",
-        "Value": lastName
-      },
-      {
-        "Attribute": "Phone",
-        "Value": phone.replace(/\D/g, '')
-      },
-      {
-        "Attribute": "mx_Patient_City",
-        "Value": city.trim()
-      },
-      {
-        "Attribute": "Source",
-        "Value": source || "Google_lp"
-      },
-      {
-        "Attribute": "mx_Lead_Type",
-        "Value": "P1 - Curelo New"
-      },
-      {
-        "Attribute": "mx_Product_Service_Interest",
-        "Value": service || ""
-      },
-      {
-        "Attribute": "SourceCampaign",
-        "Value": sourceCampaign
-      }
+      { "Attribute": "FirstName", "Value": firstName },
+      { "Attribute": "LastName", "Value": lastName },
+      { "Attribute": "Phone", "Value": phone.replace(/\D/g, '') },
+      { "Attribute": "mx_Patient_City", "Value": city.trim() },
+      { "Attribute": "Source", "Value": source || "Google_lp" },
+      { "Attribute": "mx_Lead_Type", "Value": "P1 - Curelo New" },
+      { "Attribute": "mx_Product_Service_Interest", "Value": service || "" },
+      { "Attribute": "SearchBy", "Value": "Phone" },
+      { "Attribute": "mx_Slug", "Value": slug || "" },
+      { "Attribute": "mx_Source_Referral_URL", "Value": referralUrl || "" },
+      { "Attribute": "mx_Latest_Source", "Value": latestSource },
+      { "Attribute": "mx_IP_Address", "Value": clientIp },
+      { "Attribute": "mx_utm_source", "Value": utmSource || "" },
+      { "Attribute": "mx_utm_medium", "Value": utmMedium || "" }
     ];
 
-    // Add optional UTM tracking fields if provided
-    if (utmSource) {
-      payload.push({ "Attribute": "mx_utm_source", "Value": utmSource });
-    }
-    if (utmTerm) {
-      payload.push({ "Attribute": "mx_utm_term", "Value": utmTerm });
-    }
-    if (gclid) {
-      payload.push({ "Attribute": "mx_GCLid", "Value": gclid });
-    }
-    if (adName) {
-      payload.push({ "Attribute": "mx_Ad_Name", "Value": adName });
-    }
-    if (adsetName) {
-      payload.push({ "Attribute": "mx_Adset_Name", "Value": adsetName });
+    // Source Specific & Conditional Fields
+    if (campaignId) {
+      payload.push({ "Attribute": "mx_Source_Campaign_ID", "Value": campaignId });
     }
 
-    // Get API credentials from environment variables
+    if (isGoogleLp) {
+      if (decodedKeyword) payload.push({ "Attribute": "mx_utm_keyword", "Value": decodedKeyword });
+      if (gclid) payload.push({ "Attribute": "mx_GCLid", "Value": gclid });
+      if (adId) payload.push({ "Attribute": "mx_Ad_Id", "Value": adId });
+      if (adgroupId) payload.push({ "Attribute": "mx_Adset_Id", "Value": adgroupId });
+      if (cleanKeywordId) payload.push({ "Attribute": "mx_utm_keyword_id", "Value": cleanKeywordId });
+      if (locationId) payload.push({ "Attribute": "mx_google_location_id", "Value": locationId });
+    } else {
+      // For non-google sources (e.g. meta)
+      if (adsetId) payload.push({ "Attribute": "mx_Adset_Id", "Value": adsetId });
+      if (gclid) payload.push({ "Attribute": "mx_GCLid", "Value": gclid });
+    }
+
+    // Get API credentials
     const accessKey = process.env.LEADSQUARED_ACCESS_KEY;
     const secretKey = process.env.LEADSQUARED_SECRET_KEY;
 
     if (!accessKey || !secretKey) {
       console.error('LeadSquared credentials not configured');
-      return res.status(500).json({
-        success: false,
-        error: 'Server configuration error'
-      });
+      return res.status(500).json({ success: false, error: 'Server configuration error' });
     }
 
-    // Submit to LeadSquared API
-    const leadSquaredUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/Lead.CreateOrUpdate?postUpdatedLead=false&accessKey=${accessKey}&secretKey=${secretKey}`;
+    // Submit to LeadSquared Capture API
+    const leadSquaredUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/Lead.Capture?accessKey=${accessKey}&secretKey=${secretKey}`;
 
     const response = await fetch(leadSquaredUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     const result = await response.json();
 
-    // Check for LeadSquared API errors
     if (result.Status === 'Error') {
       console.error('LeadSquared API Error:', result.ExceptionMessage);
       return res.status(500).json({
         success: false,
         error: 'Failed to submit lead',
-        message: 'We encountered an issue processing your request. Please try again later.'
+        message: 'Processing error. Please try again.'
       });
     }
 
-    // Success response
-    console.log('Lead submitted successfully:', {
-      leadId: result.Message?.Id,
-      timestamp: new Date().toISOString()
-    });
-
     return res.status(200).json({
       success: true,
-      message: 'Lead submitted successfully',
+      message: 'Lead captured successfully',
       leadId: result.Message?.Id || null
     });
 
@@ -182,8 +161,7 @@ export default async function handler(req, res) {
     console.error('Error submitting lead:', error.message);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      message: 'We encountered an issue processing your request. Please try again later.'
+      error: 'Internal server error'
     });
   }
 }

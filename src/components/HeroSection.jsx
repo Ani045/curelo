@@ -31,22 +31,19 @@ const getUrlSlug = () => {
   try {
     if (typeof window === 'undefined') return '';
 
-    // Get the pathname from the URL
     const pathname = window.location.pathname;
 
-    // Remove leading and trailing slashes
+    // PRD rule: Extract path segments after /lead/
+    if (pathname.includes('/lead/')) {
+      const match = pathname.match(/\/lead\/(.*)/);
+      if (match && match[1]) {
+        return match[1].replace(/^\/+|\/+$/g, '').substring(0, 100);
+      }
+    }
+
     let slug = pathname.replace(/^\/+|\/+$/g, '');
-
-    // Note: We no longer replace internal slashes with underscores as per user request
-
-    // Remove any potentially dangerous characters - allow alphanumeric, hyphens, underscores, and slashes
     slug = slug.replace(/[^a-zA-Z0-9\-_]/g, '');
-
-    // Limit length to prevent abuse (max 100 characters)
-    slug = slug.substring(0, 100);
-
-    // Return the sanitized slug or empty string for homepage
-    return slug || '';
+    return slug.substring(0, 100) || '';
   } catch (error) {
     console.error('Error extracting URL slug:', error);
     return '';
@@ -142,16 +139,31 @@ const HeroSection = () => {
     setIsSubmitting(true);
 
     try {
-      // Get the URL slug for tracking which landing page the lead came from
+      // Get the URL slug and all query parameters for tracking
       const urlSlug = getUrlSlug();
+      const searchParams = new URLSearchParams(window.location.search);
 
-      // Send form data as simple object - the API will transform it to LeadSquared format
       const payload = {
         name: formData.name,
         phone: formData.phone,
         city: formData.city,
-        source: 'Google_lp',  // Hidden field - can be customized per page/campaign
-        utmSource: urlSlug    // Maps to mx_utm_source - extracted from URL path (e.g., "thyroid-test")
+        slug: urlSlug,
+        referralUrl: window.location.href,
+        // UTM Parameters
+        utmSource: searchParams.get('utm_source'),
+        utmMedium: searchParams.get('utm_medium'),
+        utmTerm: searchParams.get('utm_term'),
+        utmKeyword: searchParams.get('Keyword'), // Matches PRD mapping for google-lp
+        utmKeywordId: searchParams.get('Keyword_Id'),
+        // Ad Identifiers
+        gclid: searchParams.get('gclid') || searchParams.get('gcl_Id'),
+        adId: searchParams.get('ad_id'),
+        adgroupId: searchParams.get('adgroup_id'),
+        adsetId: searchParams.get('adset_id'),
+        campaignId: searchParams.get('campaign_id') || searchParams.get('gad_campaignid'),
+        locationId: searchParams.get('Location'),
+        // Others
+        source: 'Google_lp' // Default source for this form
       };
 
       // Submit to serverless API endpoint
