@@ -8,6 +8,7 @@ import FAQSection from '../components/FAQSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import Footer from '../components/Footer';
 import StickyFooter from '../components/StickyFooter';
+import StickyCTAs from '../components/StickyCTAs';
 
 const DefaultTemplate = () => {
     const [selectedPackage, setSelectedPackage] = useState(null);
@@ -37,6 +38,7 @@ const DefaultTemplate = () => {
             {/* Footer only - removed all other sections */}
             <Footer />
             <StickyFooter />
+            <StickyCTAs />
         </div>
     );
 };

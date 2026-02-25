@@ -4,6 +4,7 @@ import MostBookedPackages from '../components/MostBookedPackages';
 import FAQSection from '../components/FAQSection';
 import Footer from '../components/Footer';
 import StickyFooter from '../components/StickyFooter';
+import StickyCTAs from '../components/StickyCTAs';
 
 const MinimalTemplate = () => {
     const [selectedPackage, setSelectedPackage] = useState(null);
@@ -27,6 +28,7 @@ const MinimalTemplate = () => {
             <FAQSection />
             <Footer />
             <StickyFooter />
+            <StickyCTAs />
         </div>
     );
 };
