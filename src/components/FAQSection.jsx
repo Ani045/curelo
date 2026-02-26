@@ -118,14 +118,6 @@ const FAQSection = () => {
               {/* Overlay gradient */}
               <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent z-20"></div>
 
-              {/* Floating badge */}
-              <div
-                className="absolute top-6 right-6 bg-white rounded-full p-3 shadow-lg z-30"
-              >
-                <div className="w-12 h-12 bg-[#143a69] rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiPhone} className="text-white text-xl" />
-                </div>
-              </div>
             </div>
 
             {/* Bottom accent */}
