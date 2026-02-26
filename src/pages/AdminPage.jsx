@@ -637,8 +637,9 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={feature.icon}
                                                         onChange={(e) => {
-                                                            const newFeatures = [...localData.whyChooseUs.features];
-                                                            newFeatures[index].icon = e.target.value;
+                                                            const newFeatures = localData.whyChooseUs.features.map((f, i) =>
+                                                                i === index ? { ...f, icon: e.target.value } : f
+                                                            );
                                                             updateLocalSection('whyChooseUs', { features: newFeatures });
                                                         }}
                                                         className="w-full p-2 border rounded text-sm"
@@ -650,8 +651,9 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={feature.title}
                                                         onChange={(e) => {
-                                                            const newFeatures = [...localData.whyChooseUs.features];
-                                                            newFeatures[index].title = e.target.value;
+                                                            const newFeatures = localData.whyChooseUs.features.map((f, i) =>
+                                                                i === index ? { ...f, title: e.target.value } : f
+                                                            );
                                                             updateLocalSection('whyChooseUs', { features: newFeatures });
                                                         }}
                                                         className="w-full p-2 border rounded text-sm"
@@ -663,8 +665,9 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={feature.description}
                                                         onChange={(e) => {
-                                                            const newFeatures = [...localData.whyChooseUs.features];
-                                                            newFeatures[index].description = e.target.value;
+                                                            const newFeatures = localData.whyChooseUs.features.map((f, i) =>
+                                                                i === index ? { ...f, description: e.target.value } : f
+                                                            );
                                                             updateLocalSection('whyChooseUs', { features: newFeatures });
                                                         }}
                                                         className="w-full p-2 border rounded text-sm"
@@ -746,8 +749,9 @@ const AdminPage = () => {
                                                         type="text"
                                                         value={item.question}
                                                         onChange={(e) => {
-                                                            const newItems = [...localData.faqs.items];
-                                                            newItems[index].question = e.target.value;
+                                                            const newItems = localData.faqs.items.map((item, i) =>
+                                                                i === index ? { ...item, question: e.target.value } : item
+                                                            );
                                                             updateLocalSection('faqs', { items: newItems });
                                                         }}
                                                         className="w-full p-2 border rounded text-sm"
@@ -759,8 +763,9 @@ const AdminPage = () => {
                                                         rows="3"
                                                         value={item.answer}
                                                         onChange={(e) => {
-                                                            const newItems = [...localData.faqs.items];
-                                                            newItems[index].answer = e.target.value;
+                                                            const newItems = localData.faqs.items.map((item, i) =>
+                                                                i === index ? { ...item, answer: e.target.value } : item
+                                                            );
                                                             updateLocalSection('faqs', { items: newItems });
                                                         }}
                                                         className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none"
