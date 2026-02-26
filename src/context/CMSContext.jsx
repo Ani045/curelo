@@ -500,7 +500,7 @@ export const CMSProvider = ({ children }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        let errorMessage = 'Failed to delete';
+        let errorMessage = 'DEBUG DELETE: Failed on server';
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorData.message || errorMessage;
@@ -521,7 +521,7 @@ export const CMSProvider = ({ children }) => {
         };
       });
 
-      console.log(`[CMS] Page "${slug}" deleted successfully.`);
+      console.log(`[CMS] DEBUG: Page "${slug}" deleted successfully.`);
       return { success: true };
     } catch (error) {
       console.error('[CMS] Deletion failed:', error);
