@@ -1,3 +1,16 @@
 {
-  "deleteSlug": "test-slug"
+  "deleteSlug": "test-slug",
+  "pages": {
+    "google-lp-allergy-test": {
+      "title": "Allergy Test",
+      "slug": "google-lp-allergy-test",
+      "template": "default",
+      "data": {
+        "hero": {
+          "desktopBanner": "data:image/jpeg;base64,...",
+          "mobileBanner": "data:image/jpeg;base64,..."
+        }
+      }
+    }
+  }
 }
