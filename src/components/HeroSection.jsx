@@ -247,9 +247,11 @@ const HeroSection = () => {
                 <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
 
                   {/* Form Header */}
-                  <div className="pt-5 pb-2 px-5">
-                    <h2 className="text-lg font-bold text-slate-800">{hero.formTitle || "Book Your Test Today"}</h2>
-                  </div>
+                  {!isSubmitted && (
+                    <div className="pt-5 pb-2 px-5">
+                      <h2 className="text-lg font-bold text-slate-800">{hero.formTitle || "Book Your Test Today"}</h2>
+                    </div>
+                  )}
 
                   <div className="px-5 pb-5 space-y-3 relative">
 
@@ -434,9 +436,11 @@ const HeroSection = () => {
               <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 sticky top-4">
 
                 {/* Form Header */}
-                <div className="pt-6 pb-2 px-6">
-                  <h2 className="text-xl font-bold text-slate-800">{hero.formTitle || "Book Your Test Today"}</h2>
-                </div>
+                {!isSubmitted && (
+                  <div className="pt-6 pb-2 px-6">
+                    <h2 className="text-xl font-bold text-slate-800">{hero.formTitle || "Book Your Test Today"}</h2>
+                  </div>
+                )}
 
                 <div className="px-6 pb-6 space-y-4 relative">
 
