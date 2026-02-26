@@ -65,9 +65,9 @@ const AdminDashboard = () => {
         if (window.confirm(`Are you sure you want to delete the page "${slug}"?`)) {
             const result = await deletePageAndSave(slug);
             if (result.success) {
-                alert('DEBUG DELETE: Page deleted successfully');
+                alert('Page deleted successfully');
             } else {
-                alert('DEBUG DELETE ERROR: ' + result.error);
+                alert('Failed to delete page: ' + result.error);
             }
         }
     };

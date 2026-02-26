@@ -232,6 +232,20 @@ app.post('/api/cms', (req, res) => {
 
         let finalData;
 
+        // Helper to load existing data safely
+        const loadExistingData = () => {
+            if (!fs.existsSync(DATA_FILE)) {
+                return { pages: {} };
+            }
+            try {
+                const content = fs.readFileSync(DATA_FILE, 'utf8');
+                return JSON.parse(content);
+            } catch (e) {
+                console.error('[CMS] CRITICAL: Failed to parse cms_data.json:', e.message);
+                throw new Error('Data file is corrupted. Preservation mode active. Manual intervention required.');
+            }
+        };
+
         // Check for deletion request
         if (incomingData.deleteSlug) {
             console.log(`[CMS] Deletion requested for slug: ${incomingData.deleteSlug}`);
@@ -239,15 +253,7 @@ app.post('/api/cms', (req, res) => {
                 return res.status(400).json({ error: 'Cannot delete home page' });
             }
 
-            let existingData = { pages: {} };
-            if (fs.existsSync(DATA_FILE)) {
-                try {
-                    existingData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-                } catch (e) {
-                    console.error('[CMS] Failed to parse existing data for deletion');
-                    return res.status(500).json({ error: 'Failed to parse existing data' });
-                }
-            }
+            const existingData = loadExistingData();
 
             if (existingData.pages && existingData.pages[incomingData.deleteSlug]) {
                 delete existingData.pages[incomingData.deleteSlug];
@@ -260,14 +266,7 @@ app.post('/api/cms', (req, res) => {
         } else if (incomingData.slug && incomingData.data) {
             // Check for partial update (page-specific)
             console.log(`[CMS] Partial update received for slug: ${incomingData.slug}`);
-            let existingData = { pages: {} };
-            if (fs.existsSync(DATA_FILE)) {
-                try {
-                    existingData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-                } catch (e) {
-                    console.error('[CMS] Failed to parse existing data, starting fresh');
-                }
-            }
+            const existingData = loadExistingData();
 
             // Merge the new page data into existing pages
             const pages = existingData.pages || {};
@@ -286,6 +285,12 @@ app.post('/api/cms', (req, res) => {
             // Full overwrite (fallback for legacy or multi-page operations)
             console.log('[CMS] Full data overwrite received');
             finalData = incomingData;
+        }
+
+        // Structural validation before writing
+        if (!finalData || typeof finalData !== 'object' || !finalData.pages) {
+            console.error('[CMS] CRITICAL: Invalid data structure detected. Aborting save to prevent data loss.', finalData);
+            throw new Error('Invalid data structure: missing "pages" object.');
         }
 
         fs.writeFileSync(DATA_FILE, JSON.stringify(finalData, null, 2), 'utf8');
