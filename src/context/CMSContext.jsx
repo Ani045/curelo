@@ -193,10 +193,21 @@ const cleanState = (data) => {
     };
   }
 
+  // Hardening: Clean any top-level junk properties (like deleteSlug)
+  const topLevelKeys = Object.keys(data);
+  const validTopLevelKeys = ['pages', 'activePageSlug'];
+  const cleanedData = { ...data };
+  topLevelKeys.forEach(key => {
+    if (!validTopLevelKeys.includes(key)) {
+      console.warn(`[CMS] Removing junk property from state: ${key}`);
+      delete cleanedData[key];
+    }
+  });
+
   return {
-    ...data,
+    ...cleanedData,
     pages: cleanedPages,
-    activePageSlug: data.activePageSlug || 'home'
+    activePageSlug: cleanedData.activePageSlug || 'home'
   };
 };
 
@@ -501,13 +512,21 @@ export const CMSProvider = ({ children }) => {
       if (!response.ok) {
         const errorText = await response.text();
         let errorMessage = 'Failed on server';
+        let isNotFound = response.status === 404;
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorData.message || errorMessage;
         } catch (e) {
           errorMessage = `Server error (${response.status})`;
         }
-        throw new Error(errorMessage);
+
+        // If page is not found on server, we should still proceed with local deletion
+        // to stay in sync if the server data was lost or manually edited.
+        if (isNotFound) {
+          console.warn(`[CMS] Page "${slug}" not found on server. Proceeding with local removal.`);
+        } else {
+          throw new Error(errorMessage);
+        }
       }
 
       // Update local state after successful server deletion

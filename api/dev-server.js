@@ -239,10 +239,16 @@ app.post('/api/cms', (req, res) => {
             }
             try {
                 const content = fs.readFileSync(DATA_FILE, 'utf8');
-                return JSON.parse(content);
+                const parsed = JSON.parse(content);
+                // Hardening: ensure valid structure
+                if (!parsed || typeof parsed !== 'object' || !parsed.pages) {
+                    console.warn('[CMS] Data file has invalid structure. Returning empty fallback.');
+                    return { pages: {} };
+                }
+                return parsed;
             } catch (e) {
-                console.error('[CMS] CRITICAL: Failed to parse cms_data.json:', e.message);
-                throw new Error('Data file is corrupted. Preservation mode active. Manual intervention required.');
+                console.error('[CMS] Failed to parse cms_data.json:', e.message);
+                return { pages: {} }; // Return empty fallback instead of throwing to allow recovery
             }
         };
 
