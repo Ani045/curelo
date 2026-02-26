@@ -90,6 +90,12 @@ const HeroSection = () => {
     city: ''
   });
 
+  const isFormValid = formData.name.trim() !== '' &&
+    formData.phone.length === 10 &&
+    /^\d+$/.test(formData.phone) &&
+    formData.city !== '';
+
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -343,10 +349,11 @@ const HeroSection = () => {
 
                       <button
                         type="submit"
-
-
-                        disabled={isSubmitting}
-                        className="w-full bg-[#143a69] hover:bg-[#0f2d52] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4"
+                        disabled={isSubmitting || !isFormValid}
+                        className={`w-full font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4 ${isFormValid && !isSubmitting
+                            ? 'bg-[#143a69] hover:bg-[#0f2d52] text-white'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          }`}
                       >
                         {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
                       </button>
@@ -531,11 +538,11 @@ const HeroSection = () => {
                     {/* Submit Button */}
                     <button
                       type="submit"
-
-
-
-                      disabled={isSubmitting}
-                      className="w-full bg-[#143a69] hover:bg-[#0f2d52] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4"
+                      disabled={isSubmitting || !isFormValid}
+                      className={`w-full font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4 ${isFormValid && !isSubmitting
+                          ? 'bg-[#143a69] hover:bg-[#0f2d52] text-white'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
                     >
                       {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
                     </button>
