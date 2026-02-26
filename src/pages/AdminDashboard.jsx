@@ -106,6 +106,29 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleEmergencyExport = () => {
+        try {
+            const data = localStorage.getItem('curelo_multi_cms_data');
+            if (!data) {
+                alert('No CMS data found in this browser\'s storage.');
+                return;
+            }
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `curelo_cms_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('Emergency backup downloaded! Please send this file to support.');
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Export failed: ' + error.message);
+        }
+    };
+
     const handlePublish = async () => {
         const result = await saveToServer();
         if (result.success) {
@@ -364,6 +387,23 @@ const AdminDashboard = () => {
                             </div>
                         </div>
                     )}
+                </div>
+
+                {/* Emergency Recovery Footer */}
+                <div className="p-4 bg-red-50 border-t border-red-100 flex justify-between items-center mt-8">
+                    <div className="flex items-center gap-2 text-red-700">
+                        <span className="text-xl">⚠️</span>
+                        <div className="text-xs">
+                            <p className="font-bold uppercase">Emergency Recovery Tools</p>
+                            <p>Use this if your landing pages appear missing but were recently visible.</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleEmergencyExport}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-xs font-bold transition-colors shadow-sm cursor-pointer"
+                    >
+                        Export Browser Local Backup
+                    </button>
                 </div>
             </div>
         </div>
