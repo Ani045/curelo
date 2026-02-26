@@ -488,20 +488,48 @@ export const CMSProvider = ({ children }) => {
   const deletePageAndSave = useCallback(async (slug) => {
     if (slug === 'home') return { success: false, error: 'Cannot delete home page' };
 
-    // Calculate the next state outside to ensure saveToServer gets the correct data
-    const currentPages = { ...state.pages };
-    delete currentPages[slug];
-    const nextState = {
-      ...state,
-      pages: currentPages,
-      activePageSlug: state.activePageSlug === slug ? 'home' : state.activePageSlug
-    };
+    setSaving(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ deleteSlug: slug }),
+      });
 
-    setState(nextState);
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Failed to delete';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = `Server error (${response.status})`;
+        }
+        throw new Error(errorMessage);
+      }
 
-    // For deletion, we MUST do a full save because partial saves only merge/update
-    return await saveToServer(nextState, true);
-  }, [state, saveToServer]);
+      // Update local state after successful server deletion
+      setState(prev => {
+        const newPages = { ...prev.pages };
+        delete newPages[slug];
+        return {
+          ...prev,
+          pages: newPages,
+          activePageSlug: prev.activePageSlug === slug ? 'home' : prev.activePageSlug
+        };
+      });
+
+      console.log(`[CMS] Page "${slug}" deleted successfully.`);
+      return { success: true };
+    } catch (error) {
+      console.error('[CMS] Deletion failed:', error);
+      return { success: false, error: error.message || 'An unexpected error occurred' };
+    } finally {
+      setSaving(false);
+    }
+  }, []);
 
   const getAllPages = useCallback(() => {
     return Object.values(state.pages).map(p => ({ title: p.title, slug: p.slug, template: p.template }));

@@ -232,8 +232,33 @@ app.post('/api/cms', (req, res) => {
 
         let finalData;
 
-        // Check for partial update (page-specific)
-        if (incomingData.slug && incomingData.data) {
+        // Check for deletion request
+        if (incomingData.deleteSlug) {
+            console.log(`[CMS] Deletion requested for slug: ${incomingData.deleteSlug}`);
+            if (incomingData.deleteSlug === 'home') {
+                return res.status(400).json({ error: 'Cannot delete home page' });
+            }
+
+            let existingData = { pages: {} };
+            if (fs.existsSync(DATA_FILE)) {
+                try {
+                    existingData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+                } catch (e) {
+                    console.error('[CMS] Failed to parse existing data for deletion');
+                    return res.status(500).json({ error: 'Failed to parse existing data' });
+                }
+            }
+
+            if (existingData.pages && existingData.pages[incomingData.deleteSlug]) {
+                delete existingData.pages[incomingData.deleteSlug];
+                finalData = existingData;
+                console.log(`[CMS] Page "${incomingData.deleteSlug}" removed from data`);
+            } else {
+                console.warn(`[CMS] Attempted to delete non-existent page: ${incomingData.deleteSlug}`);
+                return res.status(404).json({ error: 'Page not found' });
+            }
+        } else if (incomingData.slug && incomingData.data) {
+            // Check for partial update (page-specific)
             console.log(`[CMS] Partial update received for slug: ${incomingData.slug}`);
             let existingData = { pages: {} };
             if (fs.existsSync(DATA_FILE)) {
