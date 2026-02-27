@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useCMS } from '../context/CMSContext';
@@ -219,13 +220,29 @@ const HeroSection = () => {
             <div className="w-full lg:w-[65%] flex flex-col gap-3 lg:gap-8">
 
               {/* Main Banner Image - Responsive based on screen size */}
-              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-sm bg-white">
+              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-sm bg-white group">
+                {/* Text Overlay */}
+                <div className="absolute inset-0 flex flex-col justify-center px-6 lg:px-12 z-10 bg-gradient-to-r from-black/60 via-black/40 to-transparent">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 lg:mb-5 drop-shadow-md leading-tight max-w-lg">
+                      Your Health, <span className="text-green-400">Our Priority</span>
+                    </h1>
+                    <p className="text-sm md:text-base lg:text-lg text-gray-100 max-w-md drop-shadow-md leading-relaxed">
+                      Experience accurate diagnostics, on-time collections, and reliable care tailored for you.
+                    </p>
+                  </motion.div>
+                </div>
+
                 {/* Small Device Banner (< 400px like iPhone SE) - Full image */}
                 {isSmallDevice && (
                   <img
                     src={getImageSrc(hero.smallBanner, 'smallBanner')}
                     alt="Full Body Checkup Banner"
-                    className="w-full h-auto"
+                    className="w-full h-auto min-h-[300px] object-cover"
                     onError={() => handleImageError('smallBanner')}
                   />
                 )}
@@ -234,7 +251,7 @@ const HeroSection = () => {
                   <img
                     src={getImageSrc(hero.mobileBanner, 'mobileBanner')}
                     alt="Full Body Checkup Banner"
-                    className="w-full h-auto lg:hidden"
+                    className="w-full h-auto min-h-[350px] object-cover lg:hidden"
                     onError={() => handleImageError('mobileBanner')}
                   />
                 )}
@@ -242,7 +259,7 @@ const HeroSection = () => {
                 <img
                   src={getImageSrc(hero.desktopBanner, 'desktopBanner')}
                   alt="Full Body Checkup Banner"
-                  className="w-full h-auto object-cover hidden lg:block"
+                  className="w-full h-auto min-h-[400px] object-cover hidden lg:block"
                   onError={() => handleImageError('desktopBanner')}
                 />
               </div>
@@ -351,8 +368,8 @@ const HeroSection = () => {
                         type="submit"
                         disabled={isSubmitting || !isFormValid}
                         className={`w-full font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4 ${isFormValid && !isSubmitting
-                            ? 'bg-[#143a69] hover:bg-[#0f2d52] text-white'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          ? 'bg-[#143a69] hover:bg-[#0f2d52] text-white'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           }`}
                       >
                         {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
@@ -540,8 +557,8 @@ const HeroSection = () => {
                       type="submit"
                       disabled={isSubmitting || !isFormValid}
                       className={`w-full font-bold py-3 rounded-full uppercase tracking-wider transition-colors shadow-sm text-base mt-4 ${isFormValid && !isSubmitting
-                          ? 'bg-[#143a69] hover:bg-[#0f2d52] text-white'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ? 'bg-[#143a69] hover:bg-[#0f2d52] text-white'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                     >
                       {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
