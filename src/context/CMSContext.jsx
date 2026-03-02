@@ -616,6 +616,60 @@ export const CMSProvider = ({ children }) => {
     }
   }, []);
 
+  const duplicatePageAndSave = useCallback(async (sourceSlug, newSlug, newTitle) => {
+    if (state.pages[newSlug]) return { success: false, error: 'A page with this slug already exists' };
+
+    const sourcePage = state.pages[sourceSlug];
+    if (!sourcePage) return { success: false, error: 'Source page not found' };
+
+    console.log(`[CMS] Duplicating page "${sourceSlug}" to "${newSlug}"`);
+
+    // 1. Prepare the new page object based on the source
+    const newPage = {
+      title: newTitle,
+      slug: newSlug,
+      template: sourcePage.template || 'default',
+      data: JSON.parse(JSON.stringify(sourcePage.data || defaultData)) // Deep clone data to avoid reference sharing
+    };
+
+    // 2. Prepare the payload for a partial update
+    const payload = JSON.stringify(newPage);
+
+    setSaving(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: payload,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Server error (${response.status})`);
+      }
+
+      // 3. Update local state only after successful server save
+      setState(prev => ({
+        ...prev,
+        pages: {
+          ...prev.pages,
+          [newSlug]: newPage
+        },
+        activePageSlug: newSlug // Auto-select the duplicated page
+      }));
+
+      console.log(`[CMS] Page "${newSlug}" duplicated and saved successfully.`);
+      return { success: true };
+    } catch (error) {
+      console.error('[CMS] Duplication failed:', error);
+      return { success: false, error: error.message || 'Failed to save duplicated page to server' };
+    } finally {
+      setSaving(false);
+    }
+  }, [state.pages]);
+
   const getAllPages = useCallback(() => {
     return Object.values(state.pages).map(p => ({ title: p.title, slug: p.slug, template: p.template }));
   }, [state.pages]);
@@ -741,6 +795,7 @@ export const CMSProvider = ({ children }) => {
       updateSectionAndSave,
       updateUSP,
       updateTestCard,
+      duplicatePageAndSave,
       saveToServer,
 
       loading,

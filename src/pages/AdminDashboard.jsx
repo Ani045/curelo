@@ -5,7 +5,7 @@ import { useCMS } from '../context/CMSContext';
 import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
-    const { getAllPages, createPage, createPageAndSave, deletePageAndSave, saveToServer, saving, loading } = useCMS();
+    const { getAllPages, createPage, createPageAndSave, duplicatePageAndSave, deletePageAndSave, saveToServer, saving, loading } = useCMS();
 
     const { logout, user, fetchUsers, addUser, deleteUser } = useAuth();
     const navigate = useNavigate();
@@ -71,6 +71,28 @@ const AdminDashboard = () => {
             } else {
                 alert('Failed to delete page: ' + result.error);
             }
+        }
+    };
+
+    const handleDuplicatePage = async (page) => {
+        const newTitle = window.prompt(`Enter title for the duplicated page:`, `${page.title} (Copy)`);
+        if (!newTitle) return;
+
+        let defaultSlug = `${page.slug}-copy`;
+        const newSlug = window.prompt(`Enter URL slug for the duplicated page:`, defaultSlug);
+        if (!newSlug) return;
+
+        const slugRegex = /^[a-z0-9-/]+$/;
+        if (!slugRegex.test(newSlug)) {
+            alert('Slug must contain only lowercase letters, numbers, hyphens, and slashes');
+            return;
+        }
+
+        const result = await duplicatePageAndSave(page.slug, newSlug, newTitle);
+        if (result.success) {
+            alert(`Page "${page.title}" duplicated to "${newTitle}" successfully!`);
+        } else {
+            alert('Failed to duplicate page: ' + result.error);
         }
     };
 
@@ -266,6 +288,16 @@ const AdminDashboard = () => {
                                                 >
                                                     Edit
                                                 </Link>
+                                                <button
+                                                    onClick={() => handleDuplicatePage(page)}
+                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Duplicate Page"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                    </svg>
+                                                </button>
                                                 {page.slug !== 'home' && (
                                                     <button
                                                         onClick={() => handleDeletePage(page.slug)}
