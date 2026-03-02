@@ -19,6 +19,13 @@ const AdminDashboard = () => {
     const [userError, setUserError] = useState('');
     const [loadingUsers, setLoadingUsers] = useState(false);
 
+    // Duplication Modal State
+    const [isDupModalOpen, setIsDupModalOpen] = useState(false);
+    const [dupSourcePage, setDupSourcePage] = useState(null);
+    const [dupName, setDupName] = useState('');
+    const [dupSlug, setDupSlug] = useState('');
+    const [dupError, setDupError] = useState('');
+
     const pages = getAllPages();
 
     useEffect(() => {
@@ -74,25 +81,43 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleDuplicatePage = async (page) => {
-        const newTitle = window.prompt(`Enter title for the duplicated page:`, `${page.title} (Copy)`);
-        if (!newTitle) return;
+    const handleDuplicatePage = (page) => {
+        setDupSourcePage(page);
+        setDupName(`${page.title} (Copy)`);
+        setDupSlug(`${page.slug}-copy`);
+        setDupError('');
+        setIsDupModalOpen(true);
+    };
 
-        let defaultSlug = `${page.slug}-copy`;
-        const newSlug = window.prompt(`Enter URL slug for the duplicated page:`, defaultSlug);
-        if (!newSlug) return;
+    const closeDupModal = () => {
+        setIsDupModalOpen(false);
+        setDupSourcePage(null);
+        setDupName('');
+        setDupSlug('');
+        setDupError('');
+    };
 
-        const slugRegex = /^[a-z0-9-/]+$/;
-        if (!slugRegex.test(newSlug)) {
-            alert('Slug must contain only lowercase letters, numbers, hyphens, and slashes');
+    const handleDupSubmit = async (e) => {
+        e.preventDefault();
+        setDupError('');
+
+        if (!dupName || !dupSlug) {
+            setDupError('Both name and slug are required');
             return;
         }
 
-        const result = await duplicatePageAndSave(page.slug, newSlug, newTitle);
+        const slugRegex = /^[a-z0-9-/]+$/;
+        if (!slugRegex.test(dupSlug)) {
+            setDupError('Slug must contain only lowercase letters, numbers, hyphens, and slashes');
+            return;
+        }
+
+        const result = await duplicatePageAndSave(dupSourcePage.slug, dupSlug, dupName);
         if (result.success) {
-            alert(`Page "${page.title}" duplicated to "${newTitle}" successfully!`);
+            alert(`Page duplicated successfully!`);
+            closeDupModal();
         } else {
-            alert('Failed to duplicate page: ' + result.error);
+            setDupError(result.error || 'Failed to duplicate page');
         }
     };
 
@@ -441,6 +466,78 @@ const AdminDashboard = () => {
                         Export Browser Local Backup
                     </button>
                 </div>
+
+                {/* Duplication Modal */}
+                {isDupModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="bg-[#143a69] p-6 text-white text-center">
+                                <h2 className="text-xl font-bold">Duplicate Page</h2>
+                                <p className="text-blue-200 text-sm mt-1">Creating a copy of: <span className="font-semibold text-white">"{dupSourcePage?.title}"</span></p>
+                            </div>
+
+                            <form onSubmit={handleDupSubmit} className="p-6 space-y-5">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">New Page Title</label>
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        value={dupName}
+                                        onChange={(e) => setDupName(e.target.value)}
+                                        className="w-full p-3 border-2 border-gray-100 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-medium"
+                                        placeholder="e.g. Allergy Test (Manual Refresh)"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2 tracking-wider">New URL Slug</label>
+                                    <input
+                                        type="text"
+                                        value={dupSlug}
+                                        onChange={(e) => setDupSlug(e.target.value.toLowerCase())}
+                                        className="w-full p-3 border-2 border-gray-100 rounded-lg focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-sm font-mono"
+                                        placeholder="e.g. allergy-test-refresh"
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1 italic">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                        </svg>
+                                        Lowercase letters, numbers, and hyphens only
+                                    </p>
+                                </div>
+
+                                {dupError && (
+                                    <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center gap-2">
+                                        <span className="text-red-500 text-lg leading-none mt-[-2px]">×</span>
+                                        <p className="text-red-500 text-xs font-bold">{dupError}</p>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={closeDupModal}
+                                        className="flex-1 px-4 py-3 border-2 border-gray-100 text-gray-600 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="flex-1 px-4 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-all text-sm shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {saving ? (
+                                            <div className="flex items-center justify-center gap-2">
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                <span>Duplicating...</span>
+                                            </div>
+                                        ) : 'Create Duplicate'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
