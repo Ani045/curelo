@@ -56,6 +56,8 @@ const AdminDashboard = () => {
         const success = createPage(newPage.slug, newPage.title, newPage.template);
         if (success) {
             setNewPage({ title: '', slug: '', template: 'default' });
+            // Auto-persist to server so the page doesn't vanish on refresh
+            saveToServer();
         } else {
             setPageError('A page with this slug already exists');
         }

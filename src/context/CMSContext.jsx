@@ -230,6 +230,7 @@ const compressStateImages = async (data) => {
 
 export const CMSProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [state, setState] = useState(() => {
     const initialState = {
@@ -307,17 +308,41 @@ export const CMSProvider = ({ children }) => {
   useEffect(() => {
     const fetchCMSData = async () => {
       try {
+        console.log('[CMS] Fetching data from server...');
         const response = await fetch(API_URL);
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
         const serverData = await response.json();
-        console.log('[CMS] Fetched data from server, pages found:', serverData.pages ? Object.keys(serverData.pages) : 'none');
+        console.log('[CMS] Fetched server data. Pages:', serverData.pages ? Object.keys(serverData.pages) : 'none');
 
         if (serverData && serverData.pages) {
-          setState(cleanState(serverData));
+          const cleanedServerState = cleanState(serverData);
+
+          setState(prev => {
+            // MERGE strategy: Keep local pages that don't exist on server (drafts)
+            // but update existing pages with server data (source of truth)
+            const mergedPages = { ...prev.pages };
+
+            Object.keys(cleanedServerState.pages).forEach(slug => {
+              mergedPages[slug] = cleanedServerState.pages[slug];
+            });
+
+            console.log('[CMS] Merged server data with local state. Total pages:', Object.keys(mergedPages).length);
+
+            return {
+              ...prev,
+              pages: mergedPages,
+              activePageSlug: prev.activePageSlug || cleanedServerState.activePageSlug || 'home'
+            };
+          });
+          setHasError(false);
         } else {
-          console.warn('[CMS] Server returned invalid data structure:', serverData);
+          console.warn('[CMS] Server returned invalid structure, keeping local data:', serverData);
+          // Don't set error if we got a valid response but weird data, just stay as-is
         }
       } catch (error) {
-        console.error('Failed to fetch CMS data from server:', error);
+        console.error('[CMS] Failed to fetch CMS data:', error);
+        setHasError(true);
       } finally {
         setLoading(false);
       }
@@ -676,6 +701,7 @@ export const CMSProvider = ({ children }) => {
       updateTestCard,
       saveToServer,
       loading,
+      hasError,
       saving
     }}>
       {children}
