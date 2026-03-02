@@ -346,6 +346,32 @@ const AdminPage = () => {
                             </div>
 
                             <div>
+                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Hero Content</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hero Heading (Use {'{}'} for green text, e.g. Your Health, {'{Our Priority}'})</label>
+                                        <input
+                                            type="text"
+                                            name="heroHeading"
+                                            value={localData.hero.heroHeading || ''}
+                                            onChange={handleHeroChange}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Hero Description</label>
+                                        <textarea
+                                            name="heroDescription"
+                                            rows="2"
+                                            value={localData.hero.heroDescription || ''}
+                                            onChange={handleHeroChange}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
                                 <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Offer Details</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>

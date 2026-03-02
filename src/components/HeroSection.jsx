@@ -229,10 +229,19 @@ const HeroSection = () => {
                     transition={{ duration: 0.6 }}
                   >
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 lg:mb-5 drop-shadow-md leading-tight max-w-lg">
-                      Your Health, <span className="text-green-400">Our Priority</span>
+                      {(() => {
+                        const heading = hero.heroHeading || "Your Health, {Our Priority}";
+                        const parts = heading.split(/(\{.*?\})/g);
+                        return parts.map((part, index) => {
+                          if (part.startsWith('{') && part.endsWith('}')) {
+                            return <span key={index} className="text-green-400">{part.slice(1, -1)}</span>;
+                          }
+                          return part;
+                        });
+                      })()}
                     </h1>
                     <p className="text-sm md:text-base lg:text-lg text-gray-100 max-w-md drop-shadow-md leading-relaxed">
-                      Experience accurate diagnostics, on-time collections, and reliable care tailored for you.
+                      {hero.heroDescription || "Experience accurate diagnostics, on-time collections, and reliable care tailored for you."}
                     </p>
                   </motion.div>
                 </div>

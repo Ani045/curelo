@@ -12,6 +12,8 @@ const defaultData = {
     desktopBanner: "https://brandingpioneers.co.in/curelo-health/hero.png",
     mobileBanner: "https://brandingpioneers.co.in/curelo-health/mob.png",
     smallBanner: "https://brandingpioneers.co.in/curelo-health/small-ban.png",
+    heroHeading: "Your Health, {Our Priority}",
+    heroDescription: "Experience accurate diagnostics, on-time collections, and reliable care tailored for you.",
     offerTitle: "Get Report Consultation & Diet Plan",
     offerSubtitle: "with your Booking!",
     offerPriceOriginal: "₹799",
