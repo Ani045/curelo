@@ -476,24 +476,63 @@ export const CMSProvider = ({ children }) => {
   }, [state.pages]);
 
   const createPage = useCallback((slug, title, template = 'default') => {
-    if (state.pages[slug]) return false;
-
-    setState(prev => ({
-      ...prev,
-      pages: {
-        ...prev.pages,
-        [slug]: {
-          title,
-          slug,
-          template,
-          data: defaultData
-        }
-      }
-    }));
     return true;
   }, [state.pages]);
 
+  const createPageAndSave = useCallback(async (slug, title, template = 'default') => {
+    if (state.pages[slug]) return { success: false, error: 'A page with this slug already exists' };
+
+    console.log(`[CMS] Creating and saving new page: ${slug}`);
+
+    // 1. Prepare the new page object
+    const newPage = {
+      title,
+      slug,
+      template,
+      data: defaultData
+    };
+
+    // 2. Prepare the payload for a partial update
+    // Note: The server handles { slug, data, title, template } as a partial update
+    const payload = JSON.stringify(newPage);
+
+    setSaving(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: payload,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Server error (${response.status})`);
+      }
+
+      // 3. Update local state only after successful server save
+      setState(prev => ({
+        ...prev,
+        pages: {
+          ...prev.pages,
+          [slug]: newPage
+        },
+        activePageSlug: slug // Auto-select the new page
+      }));
+
+      console.log(`[CMS] Page "${slug}" created and saved successfully.`);
+      return { success: true };
+    } catch (error) {
+      console.error('[CMS] Create and save failed:', error);
+      return { success: false, error: error.message || 'Failed to save new page to server' };
+    } finally {
+      setSaving(false);
+    }
+  }, [state.pages]);
+
   const updatePageTemplate = useCallback((slug, template) => {
+
     setState(prev => ({
       ...prev,
       pages: {
@@ -690,6 +729,7 @@ export const CMSProvider = ({ children }) => {
       activeTemplate: activePage.template,
       setActivePage,
       createPage,
+      createPageAndSave,
       updatePageTemplate,
       deletePage,
       deletePageAndSave,
@@ -700,6 +740,7 @@ export const CMSProvider = ({ children }) => {
       updateUSP,
       updateTestCard,
       saveToServer,
+
       loading,
       hasError,
       saving

@@ -5,7 +5,8 @@ import { useCMS } from '../context/CMSContext';
 import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard = () => {
-    const { getAllPages, createPage, deletePageAndSave, saveToServer, saving, loading } = useCMS();
+    const { getAllPages, createPage, createPageAndSave, deletePageAndSave, saveToServer, saving, loading } = useCMS();
+
     const { logout, user, fetchUsers, addUser, deleteUser } = useAuth();
     const navigate = useNavigate();
 
@@ -38,7 +39,7 @@ const AdminDashboard = () => {
         navigate('/login');
     };
 
-    const handleCreatePage = (e) => {
+    const handleCreatePage = async (e) => {
         e.preventDefault();
         setPageError('');
 
@@ -53,13 +54,12 @@ const AdminDashboard = () => {
             return;
         }
 
-        const success = createPage(newPage.slug, newPage.title, newPage.template);
-        if (success) {
+        const result = await createPageAndSave(newPage.slug, newPage.title, newPage.template);
+        if (result.success) {
             setNewPage({ title: '', slug: '', template: 'default' });
-            // Auto-persist to server so the page doesn't vanish on refresh
-            saveToServer();
+            // The new page is already saved by createPageAndSave
         } else {
-            setPageError('A page with this slug already exists');
+            setPageError(result.error || 'Failed to create page');
         }
     };
 
@@ -132,13 +132,15 @@ const AdminDashboard = () => {
     };
 
     const handlePublish = async () => {
-        const result = await saveToServer();
+        // Force a full site sync from the dashboard to ensure all local changes/pages are on server
+        const result = await saveToServer(undefined, true);
         if (result.success) {
-            alert('Changes saved and published to server successfully!');
+            alert('Full site published to server successfully!');
         } else {
             alert('Failed to publish: ' + result.error);
         }
     };
+
 
     return (
         <div className="min-h-screen bg-gray-50 p-8">

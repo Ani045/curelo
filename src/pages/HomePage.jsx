@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCMS } from '../context/CMSContext';
 import DefaultTemplate from '../templates/DefaultTemplate';
 import MinimalTemplate from '../templates/MinimalTemplate';
+import NotFoundPage from './NotFoundPage';
 
 const HomePage = () => {
   const params = useParams();
   const slug = params['*'];
   const navigate = useNavigate();
   const { data, activeTemplate, setActivePage, getAllPages, loading, hasError, activePageSlug } = useCMS();
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -22,19 +24,25 @@ const HomePage = () => {
     console.log(`[Router] Checking slug: "${pageSlug}". Exists: ${pageExists}. loading: ${loading}, hasError: ${hasError}`);
 
     if (pageExists) {
+      setNotFound(false);
       setActivePage(pageSlug);
     } else if (cleanSlug && !loading && !hasError) {
-      // ONLY redirect if we are CERTAIN it doesn't exist (loading is false and no server error)
-      console.warn(`[Router] Page "${cleanSlug}" not found in merged state. Redirecting to home.`);
-      navigate('/', { replace: true });
+      // CERTAIN it doesn't exist
+      console.warn(`[Router] Page "${cleanSlug}" not found. Showing 404.`);
+      setNotFound(true);
     } else if (hasError) {
       console.error(`[Router] Server error detected while checking for "${pageSlug}". Redirection paused to prevent false 404.`);
     }
   }, [slug, setActivePage, getAllPages, navigate, loading, hasError]);
 
+  if (notFound) {
+    return <NotFoundPage />;
+  }
+
   const currentSlug = (slug || '').replace(/\/$/, '') || 'home';
 
   if (loading || activePageSlug !== currentSlug || !data || !data.hero) {
+
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
         <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
