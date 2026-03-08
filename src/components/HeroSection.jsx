@@ -222,29 +222,31 @@ const HeroSection = () => {
               {/* Main Banner Image - Responsive based on screen size */}
               <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-sm bg-white group">
                 {/* Text Overlay */}
-                <div className="absolute inset-0 flex flex-col justify-center px-6 lg:px-12 z-10 bg-gradient-to-r from-black/60 via-black/40 to-transparent">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 lg:mb-5 drop-shadow-md leading-tight max-w-lg">
-                      {(() => {
-                        const heading = hero.heroHeading || "Your Health, {Our Priority}";
-                        const parts = heading.split(/(\{.*?\})/g);
-                        return parts.map((part, index) => {
-                          if (part.startsWith('{') && part.endsWith('}')) {
-                            return <span key={index} className="text-green-400">{part.slice(1, -1)}</span>;
-                          }
-                          return part;
-                        });
-                      })()}
-                    </h1>
-                    <p className="text-sm md:text-base lg:text-lg text-gray-100 max-w-md drop-shadow-md leading-relaxed">
-                      {hero.heroDescription || "Experience accurate diagnostics, on-time collections, and reliable care tailored for you."}
-                    </p>
-                  </motion.div>
-                </div>
+                {hero.showHeroContent !== false && (
+                  <div className="absolute inset-0 flex flex-col justify-center px-6 lg:px-12 z-10 bg-gradient-to-r from-black/60 via-black/40 to-transparent">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 lg:mb-5 drop-shadow-md leading-tight max-w-lg">
+                        {(() => {
+                          const heading = hero.heroHeading || "Your Health, {Our Priority}";
+                          const parts = heading.split(/(\{.*?\})/g);
+                          return parts.map((part, index) => {
+                            if (part.startsWith('{') && part.endsWith('}')) {
+                              return <span key={index} className="text-green-400">{part.slice(1, -1)}</span>;
+                            }
+                            return part;
+                          });
+                        })()}
+                      </h1>
+                      <p className="text-sm md:text-base lg:text-lg text-gray-100 max-w-md drop-shadow-md leading-relaxed">
+                        {hero.heroDescription || "Experience accurate diagnostics, on-time collections, and reliable care tailored for you."}
+                      </p>
+                    </motion.div>
+                  </div>
+                )}
 
                 {/* Small Device Banner (< 400px like iPhone SE) - Full image */}
                 {isSmallDevice && (

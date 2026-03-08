@@ -346,7 +346,22 @@ const AdminPage = () => {
                             </div>
 
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Hero Content</h3>
+                                <div className="flex justify-between items-center border-b pb-2 mb-4">
+                                    <h3 className="text-lg font-semibold text-gray-800">Hero Content</h3>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="showHeroContent"
+                                            name="showHeroContent"
+                                            checked={localData.hero.showHeroContent !== false}
+                                            onChange={(e) => updateLocalSection('hero', { showHeroContent: e.target.checked })}
+                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                        />
+                                        <label htmlFor="showHeroContent" className="text-sm font-medium text-gray-700 cursor-pointer">
+                                            Show Hero Content (Text & Shadow)
+                                        </label>
+                                    </div>
+                                </div>
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Hero Heading (Use {'{}'} for green text, e.g. Your Health, {'{Our Priority}'})</label>

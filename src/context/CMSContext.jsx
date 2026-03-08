@@ -24,7 +24,8 @@ const defaultData = {
       { icon: 'https://brandingpioneers.co.in/curelo-health/icon2.png', title: "India's Widest Home Collection Network" },
       { icon: 'https://brandingpioneers.co.in/curelo-health/icon3.png', title: "100% Report Accuracy Guaranteed" },
       { icon: 'https://brandingpioneers.co.in/curelo-health/icon4.png', title: "70+ Lakhs Patients Served" }
-    ]
+    ],
+    showHeroContent: true
   },
   formData: {
     cities: ["Delhi", "Noida", "Gurgaon", "Ghaziabad", "Faridabad", "Vadodara", "Ahmedabad"]
@@ -321,20 +322,23 @@ export const CMSProvider = ({ children }) => {
           const cleanedServerState = cleanState(serverData);
 
           setState(prev => {
-            // MERGE strategy: Keep local pages that don't exist on server (drafts)
-            // but update existing pages with server data (source of truth)
-            const mergedPages = { ...prev.pages };
+            // SYNC strategy: Server data is the source of truth for pages.
+            // This ensures deletions on server are reflected locally.
+            const mergedPages = cleanedServerState.pages;
 
-            Object.keys(cleanedServerState.pages).forEach(slug => {
-              mergedPages[slug] = cleanedServerState.pages[slug];
-            });
+            console.log('[CMS] Synced state with server. Total pages:', Object.keys(mergedPages).length);
 
-            console.log('[CMS] Merged server data with local state. Total pages:', Object.keys(mergedPages).length);
+            // Ensure activePageSlug exists in the new pages list
+            let newActiveSlug = prev.activePageSlug || cleanedServerState.activePageSlug || 'home';
+            if (!mergedPages[newActiveSlug]) {
+              console.warn(`[CMS] Active page "${newActiveSlug}" was removed on server. Resetting to home.`);
+              newActiveSlug = 'home';
+            }
 
             return {
               ...prev,
               pages: mergedPages,
-              activePageSlug: prev.activePageSlug || cleanedServerState.activePageSlug || 'home'
+              activePageSlug: newActiveSlug
             };
           });
           setHasError(false);

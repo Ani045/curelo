@@ -38,7 +38,8 @@ export default async function handler(req, res) {
       adgroupId,
       adsetId,
       campaignId,
-      locationId
+      locationId,
+      email // Added email from frontend
     } = req.body;
 
     // Validate required fields
@@ -88,6 +89,7 @@ export default async function handler(req, res) {
 
     // Build LeadSquared payload
     const payload = [
+      { "Attribute": "EmailAddress", "Value": email || "" },
       { "Attribute": "FirstName", "Value": firstName },
       { "Attribute": "LastName", "Value": lastName },
       { "Attribute": "Phone", "Value": phone.replace(/\D/g, '') },
@@ -132,7 +134,7 @@ export default async function handler(req, res) {
     }
 
     // Submit to LeadSquared Capture API
-    const leadSquaredUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/Lead.Capture?accessKey=${accessKey}&secretKey=${secretKey}`;
+    const leadSquaredUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/Lead.Capture?accessKey=${encodeURIComponent(accessKey)}&secretKey=${encodeURIComponent(secretKey)}`;
 
     const response = await fetch(leadSquaredUrl, {
       method: 'POST',
