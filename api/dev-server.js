@@ -18,6 +18,17 @@ const PORT = 3001;
 const DATA_FILE = path.join(__dirname, '../data/cms_data.json');
 const USERS_FILE = path.join(__dirname, '../data/users.json');
 
+// Initialize data files if they don't exist
+[DATA_FILE, USERS_FILE].forEach(file => {
+    if (!fs.existsSync(file)) {
+        const initialFile = `${file}.initial`;
+        if (fs.existsSync(initialFile)) {
+            console.log(`[Init] Initializing ${path.basename(file)} from template...`);
+            fs.copyFileSync(initialFile, file);
+        }
+    }
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '100mb' })); // Increase limit for potentially large CMS data, including multiple images (increased to 100mb to handle base64 overhead)

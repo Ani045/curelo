@@ -595,6 +595,15 @@ const AdminPage = () => {
                                                     />
                                                 </div>
                                                 <div>
+                                                    <label className="block text-xs font-medium text-gray-500 mb-1">Discount Label (e.g. 78% OFF)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={pkg.discount}
+                                                        onChange={(e) => updateLocalPackage(index, 'discount', e.target.value)}
+                                                        className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                                                    />
+                                                </div>
+                                                <div>
                                                     <label className="block text-xs font-medium text-gray-500 mb-1">Includes (# Params)</label>
                                                     <input
                                                         type="text"
