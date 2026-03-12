@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "node api/dev-server.js",
     "dev": "node api/dev-server.js & vite",
     "dev:vite": "vite",
     "dev:api": "node api/dev-server.js",
