@@ -87,14 +87,56 @@ export default async function handler(req, res) {
     const decodedKeyword = utmKeyword ? decodeURIComponent(utmKeyword).replace(/\+/g, ' ') : '';
     const cleanKeywordId = utmKeywordId ? utmKeywordId.replace('kwd-', '') : '';
 
+    // Get API credentials early to make the GET request
+    const accessKey = process.env.LEADSQUARED_ACCESS_KEY;
+    const secretKey = process.env.LEADSQUARED_SECRET_KEY;
+
+    if (!accessKey || !secretKey) {
+      console.error('LeadSquared credentials not configured');
+      return res.status(500).json({ success: false, error: 'Server configuration error' });
+    }
+
+    const formattedPhone = phone.replace(/\D/g, '');
+
+    // Check if lead already exists based on phone number
+    let finalSource = latestSource; // Default to mx_latest_source if no lead found
+
+    try {
+      const getLeadUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/RetrieveLeadByPhoneNumber?accessKey=${encodeURIComponent(accessKey)}&secretKey=${encodeURIComponent(secretKey)}&phone=${formattedPhone}`;
+      
+      const getLeadResponse = await fetch(getLeadUrl, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (getLeadResponse.ok) {
+        const getLeadResult = await getLeadResponse.json();
+        
+        // LeadSquared might return an array or a single object
+        let existingLead = null;
+        if (Array.isArray(getLeadResult) && getLeadResult.length > 0) {
+          existingLead = getLeadResult[0];
+        } else if (getLeadResult && typeof getLeadResult === 'object' && getLeadResult.ProspectID) {
+          existingLead = getLeadResult;
+        }
+
+        if (existingLead && existingLead.mx_utm_source) {
+          finalSource = existingLead.mx_utm_source;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking existing lead:', error.message);
+      // Proceed with default logic if checking fails
+    }
+
     // Build LeadSquared payload
     const payload = [
       { "Attribute": "EmailAddress", "Value": email || "" },
       { "Attribute": "FirstName", "Value": firstName },
       { "Attribute": "LastName", "Value": lastName },
-      { "Attribute": "Phone", "Value": phone.replace(/\D/g, '') },
+      { "Attribute": "Phone", "Value": formattedPhone },
       { "Attribute": "mx_Patient_City", "Value": city.trim() },
-      { "Attribute": "Source", "Value": source || "Google_lp" },
+      { "Attribute": "Source", "Value": finalSource },
       { "Attribute": "mx_Lead_Type", "Value": "P1 - Curelo New" },
       { "Attribute": "mx_Product_Service_Interest", "Value": service || "" },
       { "Attribute": "SearchBy", "Value": "Phone" },
@@ -122,15 +164,6 @@ export default async function handler(req, res) {
       // For non-google sources (e.g. meta)
       if (adsetId) payload.push({ "Attribute": "mx_Adset_Id", "Value": adsetId });
       if (gclid) payload.push({ "Attribute": "mx_GCLid", "Value": gclid });
-    }
-
-    // Get API credentials
-    const accessKey = process.env.LEADSQUARED_ACCESS_KEY;
-    const secretKey = process.env.LEADSQUARED_SECRET_KEY;
-
-    if (!accessKey || !secretKey) {
-      console.error('LeadSquared credentials not configured');
-      return res.status(500).json({ success: false, error: 'Server configuration error' });
     }
 
     // Submit to LeadSquared Capture API
