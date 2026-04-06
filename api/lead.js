@@ -99,11 +99,15 @@ export default async function handler(req, res) {
     const formattedPhone = phone.replace(/\D/g, '');
 
     // Check if lead already exists based on phone number
-    let finalSource = latestSource; // Default to mx_latest_source if no lead found
+    let finalSource = latestSource; // Default to mx_latest_source
+    let leadCheckPerformed = false;
+    let leadFound = false;
+    let existingUtmSource = null;
 
     try {
       const getLeadUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/RetrieveLeadByPhoneNumber?accessKey=${encodeURIComponent(accessKey)}&secretKey=${encodeURIComponent(secretKey)}&phone=${formattedPhone}`;
       
+      leadCheckPerformed = true;
       const getLeadResponse = await fetch(getLeadUrl, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
@@ -120,13 +124,18 @@ export default async function handler(req, res) {
           existingLead = getLeadResult;
         }
 
-        if (existingLead && existingLead.mx_utm_source) {
-          finalSource = existingLead.mx_utm_source;
+        if (existingLead) {
+          leadFound = true;
+          // Look for mx_utm_source in a case-insensitive way just in case
+          existingUtmSource = existingLead.mx_utm_source || existingLead.mx_UTM_Source || existingLead.mx_Utm_Source;
+          
+          if (existingUtmSource) {
+            finalSource = existingUtmSource;
+          }
         }
       }
     } catch (error) {
       console.error('Error checking existing lead:', error.message);
-      // Proceed with default logic if checking fails
     }
 
     // Build LeadSquared payload
@@ -189,7 +198,14 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       message: 'Lead captured successfully',
-      leadId: result.Message?.Id || null
+      leadId: result.Message?.Id || null,
+      debug: {
+        latestSource,
+        finalSource,
+        leadCheckPerformed,
+        leadFound,
+        existingUtmSource
+      }
     });
 
   } catch (error) {
