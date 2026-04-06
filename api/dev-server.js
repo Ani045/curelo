@@ -116,14 +116,68 @@ app.post('/api/lead', async (req, res) => {
         const decodedKeyword = utmKeyword ? decodeURIComponent(utmKeyword).replace(/\+/g, ' ') : '';
         const cleanKeywordId = utmKeywordId ? utmKeywordId.replace('kwd-', '') : '';
 
+        // Get API credentials from environment variables early
+        const accessKey = process.env.LEADSQUARED_ACCESS_KEY;
+        const secretKey = process.env.LEADSQUARED_SECRET_KEY;
+
+        if (!accessKey || !secretKey) {
+            console.error('LeadSquared credentials not configured');
+            return res.status(500).json({ success: false, error: 'Server configuration error' });
+        }
+
+        const formattedPhone = phone.replace(/\D/g, '');
+
+        // Check if lead already exists based on phone number
+        let finalSource = latestSource; // Default to mx_latest_source
+        let leadCheckPerformed = false;
+        let leadFound = false;
+        let existingUtmSource = null;
+
+        try {
+            const getLeadUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/RetrieveLeadByPhoneNumber?accessKey=${encodeURIComponent(accessKey)}&secretKey=${encodeURIComponent(secretKey)}&phone=${formattedPhone}`;
+            
+            leadCheckPerformed = true;
+            console.log(`Checking if lead exists: ${formattedPhone}`);
+            
+            const getLeadResponse = await fetch(getLeadUrl, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (getLeadResponse.ok) {
+                const getLeadResult = await getLeadResponse.json();
+                
+                let existingLead = null;
+                if (Array.isArray(getLeadResult) && getLeadResult.length > 0) {
+                    existingLead = getLeadResult[0];
+                } else if (getLeadResult && typeof getLeadResult === 'object' && getLeadResult.ProspectID) {
+                    existingLead = getLeadResult;
+                }
+
+                if (existingLead) {
+                    leadFound = true;
+                    existingUtmSource = existingLead.mx_utm_source || existingLead.mx_UTM_Source || existingLead.mx_Utm_Source;
+                    
+                    if (existingUtmSource) {
+                        finalSource = existingUtmSource;
+                        console.log(`Found existing lead with source: ${finalSource}`);
+                    }
+                } else {
+                    console.log('No existing lead found, using latestSource:', finalSource);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking existing lead:', error.message);
+        }
+
         // Build LeadSquared payload
         const payload = [
             { "Attribute": "EmailAddress", "Value": email || "" },
             { "Attribute": "FirstName", "Value": firstName },
             { "Attribute": "LastName", "Value": lastName },
-            { "Attribute": "Phone", "Value": phone.replace(/\D/g, '') },
+            { "Attribute": "Phone", "Value": formattedPhone },
             { "Attribute": "mx_Patient_City", "Value": city.trim() },
-            { "Attribute": "Source", "Value": source || "Google_lp" },
+            { "Attribute": "Source", "Value": finalSource },
             { "Attribute": "mx_Lead_Type", "Value": "P1 - Curelo New" },
             { "Attribute": "mx_Product_Service_Interest", "Value": service || "" },
             { "Attribute": "SearchBy", "Value": "Phone" },
@@ -155,14 +209,7 @@ app.post('/api/lead', async (req, res) => {
 
         console.log('Built LeadSquared payload:', JSON.stringify(payload, null, 2));
 
-        // Get API credentials from environment variables
-        const accessKey = process.env.LEADSQUARED_ACCESS_KEY;
-        const secretKey = process.env.LEADSQUARED_SECRET_KEY;
-
-        if (!accessKey || !secretKey) {
-            console.error('LeadSquared credentials not configured');
-            return res.status(500).json({ success: false, error: 'Server configuration error' });
-        }
+        // Credentials already fetched above
 
         // Submit to LeadSquared Capture API
         const leadSquaredUrl = `https://api-in21.leadsquared.com/v2/LeadManagement.svc/Lead.Capture?accessKey=${encodeURIComponent(accessKey)}&secretKey=${encodeURIComponent(secretKey)}`;
@@ -193,7 +240,14 @@ app.post('/api/lead', async (req, res) => {
         return res.status(200).json({
             success: true,
             message: 'Lead captured successfully',
-            leadId: result.Message?.Id || null
+            leadId: result.Message?.Id || null,
+            debug: {
+                latestSource,
+                finalSource,
+                leadCheckPerformed,
+                leadFound,
+                existingUtmSource
+            }
         });
 
     } catch (error) {
