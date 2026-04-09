@@ -85,6 +85,38 @@ const HeroSection = () => {
   const { data } = useCMS();
   const { hero } = data;
 
+  // ── Hero Banner Package Info (Frontend-only, no CMS dependency) ──
+  const packageName = hero.packageName || "Full Body Checkup";
+  const parameterCount = hero.parameterCount || "67+";
+  const offerPrice = hero.offerPrice || 499;
+  const mrpPrice = hero.mrpPrice || 999;
+  const discountPercent = mrpPrice > 0 ? Math.round(((mrpPrice - offerPrice) / mrpPrice) * 100) : 0;
+
+  const includedTests = hero.includedTests || [
+    { icon: "🩸", name: "TSH" },
+    { icon: "🧪", name: "Fasting Blood Sugar" },
+    { icon: "🫙", name: "Urine Examination" },
+    { icon: "❤️", name: "Lipid Profile" },
+    { icon: "🫀", name: "Liver Profile/LFT" },
+    { icon: "🧬", name: "Kidney Profile/KFT" },
+    { icon: "🔴", name: "CBC" },
+    { icon: "⚕️", name: "Erythrocyte Sedimentation Rate" }
+  ];
+
+  // Split tests into two columns
+  const midpoint = Math.ceil(includedTests.length / 2);
+  const leftTests = includedTests.slice(0, midpoint);
+  const rightTests = includedTests.slice(midpoint);
+
+  // Scroll to form on Book Now click
+  const scrollToForm = () => {
+    const formEl = document.getElementById('hero-name-input-desktop') || document.getElementById('hero-name-input-mobile');
+    if (formEl) {
+      formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => formEl.focus(), 600);
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -219,60 +251,111 @@ const HeroSection = () => {
             {/* LEFT COLUMN: 65% width - Banner & USP Icons (Desktop) */}
             <div className="w-full lg:w-[65%] flex flex-col gap-3 lg:gap-8">
 
-              {/* Main Banner Image - Responsive based on screen size */}
-              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-sm bg-white group">
-                {/* Text Overlay */}
-                {hero.showHeroContent !== false && (
-                  <div className="absolute inset-0 flex flex-col justify-center px-6 lg:px-12 z-10 bg-gradient-to-r from-black/60 via-black/40 to-transparent">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 lg:mb-5 drop-shadow-md leading-tight max-w-lg">
-                        {(() => {
-                          const heading = hero.heroHeading || "Your Health, {Our Priority}";
-                          const parts = heading.split(/(\{.*?\})/g);
-                          return parts.map((part, index) => {
-                            if (part.startsWith('{') && part.endsWith('}')) {
-                              return <span key={index} className="text-green-400">{part.slice(1, -1)}</span>;
-                            }
-                            return part;
-                          });
-                        })()}
-                      </h1>
-                      <p className="text-sm md:text-base lg:text-lg text-gray-100 max-w-md drop-shadow-md leading-relaxed">
-                        {hero.heroDescription || "Experience accurate diagnostics, on-time collections, and reliable care tailored for you."}
-                      </p>
-                    </motion.div>
-                  </div>
-                )}
+              {/* ═══ HERO BANNER — Full Image Background + Text Overlay ═══ */}
+              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden shadow-sm group">
 
-                {/* Small Device Banner (< 400px like iPhone SE) - Full image */}
-                {isSmallDevice && (
+                {/* ── Background Banner Image (Absolute, fills container) ── */}
+                <div className="absolute inset-0">
+                  {isSmallDevice && (
+                    <img
+                      src={getImageSrc(hero.smallBanner, 'smallBanner')}
+                      alt={packageName + " Banner"}
+                      className="w-full h-full object-cover object-right"
+                      onError={() => handleImageError('smallBanner')}
+                    />
+                  )}
+                  {!isSmallDevice && (
+                    <img
+                      src={getImageSrc(hero.mobileBanner, 'mobileBanner')}
+                      alt={packageName + " Banner"}
+                      className="w-full h-full object-cover object-right lg:hidden"
+                      onError={() => handleImageError('mobileBanner')}
+                    />
+                  )}
                   <img
-                    src={getImageSrc(hero.smallBanner, 'smallBanner')}
-                    alt="Full Body Checkup Banner"
-                    className="w-full h-auto min-h-[300px] object-cover"
-                    onError={() => handleImageError('smallBanner')}
+                    src={getImageSrc(hero.desktopBanner, 'desktopBanner')}
+                    alt={packageName + " Banner"}
+                    className="w-full h-full object-cover object-right hidden lg:block"
+                    onError={() => handleImageError('desktopBanner')}
                   />
-                )}
-                {/* Regular Mobile Banner (400px - 1023px) - Full image */}
-                {!isSmallDevice && (
-                  <img
-                    src={getImageSrc(hero.mobileBanner, 'mobileBanner')}
-                    alt="Full Body Checkup Banner"
-                    className="w-full h-auto min-h-[350px] object-cover lg:hidden"
-                    onError={() => handleImageError('mobileBanner')}
-                  />
-                )}
-                {/* Desktop Banner (1024px+) */}
-                <img
-                  src={getImageSrc(hero.desktopBanner, 'desktopBanner')}
-                  alt="Full Body Checkup Banner"
-                  className="w-full h-auto min-h-[400px] object-cover hidden lg:block"
-                  onError={() => handleImageError('desktopBanner')}
-                />
+                </div>
+
+                {/* ── Gradient overlay for text readability ── */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/20 sm:from-white sm:via-white/85 sm:to-transparent lg:from-white/95 lg:via-white/75 lg:to-transparent" />
+
+                {/* ── Text Content (Normal flow — drives container height) ── */}
+                <motion.div
+                  className="relative z-10 w-[62%] sm:w-[58%] lg:w-[52%] py-5 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-10"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  {/* Package Name */}
+                  <p className="text-[10px] sm:text-xs lg:text-sm text-gray-500 font-medium mb-0.5">Get Your</p>
+                  <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-extrabold text-[#1a1a2e] leading-snug mb-2 lg:mb-3">
+                    {packageName}
+                  </h1>
+
+                  {/* Parameters + Price Row */}
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 lg:gap-3 mb-2 lg:mb-3">
+                    {/* Parameter Badge */}
+                    <div className="bg-[#143a69] text-white rounded px-1.5 sm:px-2 lg:px-3 py-0.5 sm:py-1 lg:py-1.5 flex flex-col items-center leading-none shadow-md">
+                      <span className="text-sm sm:text-lg lg:text-xl font-extrabold">{parameterCount}</span>
+                      <span className="text-[6px] sm:text-[8px] lg:text-[10px] uppercase tracking-wider font-medium opacity-90">Parameters</span>
+                    </div>
+
+                    {/* MRP (struck) */}
+                    <span className="text-gray-400 line-through text-xs sm:text-sm lg:text-base font-medium">
+                      ₹{mrpPrice}/-
+                    </span>
+
+                    {/* Offer Price */}
+                    <span className="text-red-500 font-extrabold text-base sm:text-xl lg:text-2xl xl:text-3xl">
+                      ₹{offerPrice}/-
+                    </span>
+                  </div>
+
+                  {/* Discount text */}
+                  <p className="text-[9px] sm:text-[10px] lg:text-xs text-gray-500 font-medium mb-2 lg:mb-3">
+                    (flat {discountPercent}% off)
+                  </p>
+
+                  {/* Included Tests - Two Column Grid */}
+                  <div className="flex gap-0 mb-1.5 lg:mb-3">
+                    {/* Left Column */}
+                    <div className="flex flex-col gap-1 sm:gap-1.5 lg:gap-2 pr-2 sm:pr-3 lg:pr-4 border-r border-gray-300/60">
+                      {leftTests.map((test, i) => (
+                        <div key={i} className="flex items-center gap-1 sm:gap-1.5">
+                          <span className="text-[10px] sm:text-xs lg:text-sm shrink-0 w-3.5 sm:w-4 lg:w-5 text-center">{test.icon}</span>
+                          <span className="text-[9px] sm:text-[10px] lg:text-xs text-gray-700 font-medium leading-tight">{test.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Right Column */}
+                    <div className="flex flex-col gap-1 sm:gap-1.5 lg:gap-2 pl-2 sm:pl-3 lg:pl-4">
+                      {rightTests.map((test, i) => (
+                        <div key={i} className="flex items-center gap-1 sm:gap-1.5">
+                          <span className="text-[10px] sm:text-xs lg:text-sm shrink-0 w-3.5 sm:w-4 lg:w-5 text-center">{test.icon}</span>
+                          <span className="text-[9px] sm:text-[10px] lg:text-xs text-gray-700 font-medium leading-tight">{test.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* & more text */}
+                  <p className="text-orange-500 font-semibold italic text-[10px] sm:text-xs lg:text-sm mb-2 lg:mb-4">& more...</p>
+
+                  {/* Book Now CTA */}
+                  <motion.button
+                    onClick={scrollToForm}
+                    className="bg-[#143a69] hover:bg-[#0f2d52] text-white font-bold py-1.5 sm:py-2 lg:py-2.5 px-4 sm:px-5 lg:px-7 rounded-full text-[10px] sm:text-xs lg:text-sm uppercase tracking-wider shadow-lg hover:shadow-xl transition-all duration-300 w-fit"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    Book Now
+                  </motion.button>
+                </motion.div>
+
               </div>
 
 
